@@ -1,0 +1,46 @@
+/* Solarized: Ethan Schoonover's dark palette with its accents in use: orange layers, cyan words, violet combos, yellow numbering. */
+@font-face { font-family:'Source Code Pro'; src:url('fonts/SourceCodePro-variable-normal.woff2') format('woff2'); font-weight:200 900; }
+@font-face { font-family:'Source Sans 3'; src:url('fonts/SourceSans3-variable-normal.woff2') format('woff2'); font-weight:200 900; }
+
+:root {
+  --base03:#002b36; --base02:#073642; --base01:#586e75; --base00:#657b83; --base0:#839496; --base1:#93a1a1; --base2:#eee8d5; --base3:#fdf6e3;
+  --yellow:#b58900; --orange:#cb4b16; --red:#dc322f; --magenta:#d33682; --violet:#6c71c4; --blue:#268bd2; --cyan:#2aa198; --green:#859900;
+  --bg:var(--base03); --card:transparent; --ink:var(--base1); --sec:var(--base0); --line:var(--base01);
+  --acc:var(--orange); --brass:var(--yellow); --heldbg:var(--orange); --held-ink:var(--base3);
+  --font-title:'Source Code Pro', monospace;
+  --font-word:'Source Sans 3', system-ui, sans-serif;
+  --font-legend:'Source Code Pro', monospace;
+  --font-label:'Source Code Pro', monospace;
+}
+
+body { background:var(--base03); }
+
+/* the header reads like a line of code: yellow number, a green comment for the access line */
+.qtitle { font-weight:600; font-size:calc(19px * var(--s)); color:var(--base2); }
+.qtitle .no { color:var(--yellow); }
+.qtitle .dot { color:var(--base01); }
+.qaccess { color:var(--green); letter-spacing:0.1em; text-transform:none; }
+.qaccess::before { content:"// "; color:var(--base01); }
+.drule { height:0; border:0; border-top:1px dashed var(--base01); margin-top:calc(8px * var(--s)); opacity:1; }
+
+/* keys: no fill, an outline in base01; each kind of legend takes a palette colour */
+.key { border-radius:0; border:1px solid var(--line); background:transparent; }
+.key .lg { font-weight:500; font-size:calc(var(--u) * 0.28); color:var(--base1); }
+.key .word { font-weight:600; font-size:calc(var(--u) * 0.16); color:var(--cyan); }
+.key .combo { color:var(--violet); }
+.key .tag { color:var(--magenta); }
+.key.mod { background:var(--base02); }
+.key.mod .lg, .key.mod .word, .key.mod .combo, .key.mod .tag { color:var(--blue); }
+.key.layerkey { border-color:var(--orange); }
+.key.layerkey .lg, .key.layerkey .word { color:var(--orange); }
+.key.held { background:var(--orange); border-color:var(--orange); }
+.key.held .word, .key.held .lg, .key.held .sub { color:var(--held-ink); }
+.key.trns { opacity:1; background:transparent; border:1px dashed #0b4453; }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:var(--base01); }
+.key.dead { opacity:1; background:transparent; border:1px dotted #0b4453; }
+.key .sub { color:var(--magenta); }
+.key.layerkey .sub { color:var(--orange); }
+
+.mapping { color:var(--yellow); letter-spacing:0.2em; }
+.footer { color:var(--base0); }
+.footer .sep { color:var(--green); }

@@ -1,0 +1,58 @@
+/* Blueprint Blueline: the same drawing printed blue on paper. */
+@font-face { font-family:'Barlow'; src:url('fonts/Barlow-500-normal.woff2') format('woff2'); font-weight:500; }
+@font-face { font-family:'Barlow'; src:url('fonts/Barlow-700-normal.woff2') format('woff2'); font-weight:700; }
+@font-face { font-family:'Martian Mono'; src:url('fonts/MartianMono-400-normal.woff2') format('woff2'); font-weight:400 700; }
+
+:root {
+  --ground:#f3f5f7; --ground-deep:#e9edf1;
+  --grid:rgba(31,79,122,0.10); --grid-major:rgba(31,79,122,0.15);
+  --sig:#d1571c; --sig-text:#b8480a; --dim2:#4a6a86;
+  --bg:var(--ground); --card:transparent; --ink:#14304a; --sec:#4a6a86; --line:#1f4f7a;
+  --acc:var(--sig); --brass:var(--sig-text); --heldbg:var(--sig); --held-ink:#ffffff;
+  --font-title:'Barlow', system-ui, sans-serif;
+  --font-word:'Barlow', system-ui, sans-serif;
+  --font-legend:'Martian Mono', monospace;
+  --font-label:'Martian Mono', monospace;
+  --frame:2px;
+}
+
+body { background-color:var(--ground);
+  background-image:
+    linear-gradient(var(--grid-major) 1px, transparent 1px), linear-gradient(90deg, var(--grid-major) 1px, transparent 1px),
+    linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size:40px 40px, 40px 40px, 8px 8px, 8px 8px; }
+
+.frame { display:block; position:absolute; inset:calc(16px * var(--s)); border:var(--frame) solid var(--line); z-index:1; pointer-events:none; }
+.frame::before, .frame::after { content:""; position:absolute; width:calc(12px * var(--s)); height:calc(12px * var(--s)); border:var(--frame) solid var(--line); }
+.frame::before { left:calc(-8px * var(--s)); top:calc(-8px * var(--s)); border-right:0; border-bottom:0; }
+.frame::after { right:calc(-8px * var(--s)); bottom:calc(-8px * var(--s)); border-left:0; border-top:0; }
+
+.qtitle { font-weight:700; font-size:calc(20px * var(--s)); letter-spacing:-0.005em; color:var(--ink); }
+.qtitle .no { font-family:'Martian Mono', monospace; font-weight:500; font-size:calc(11px * var(--s)); letter-spacing:0.16em; text-transform:uppercase; color:var(--sig-text); vertical-align:middle; }
+.qtitle .dot { color:var(--dim2); }
+.qaccess { font-size:calc(9.5px * var(--s)); letter-spacing:0.14em; color:var(--sec); }
+.drule { height:0; border:0; border-top:1.5px solid var(--line); margin-top:calc(7px * var(--s)); opacity:1; }
+
+.key { border-radius:0; border:1.4px solid var(--line); background:transparent; }
+.key .lg { color:var(--ink); font-size:calc(var(--u) * 0.25); }
+.key .word { font-weight:500; font-size:calc(var(--u) * 0.16); }
+.key.mod .lg, .key.mod .word, .key.mod .combo, .key.mod .tag { color:var(--sec); }
+.key.layerkey { border:1.6px solid var(--sig); }
+.key.layerkey .lg, .key.layerkey .word { color:var(--sig-text); }
+.key.held { background:var(--sig); border-color:var(--sig); }
+.key.held .word, .key.held .lg, .key.held .sub { color:var(--held-ink); }
+.key.trns { opacity:1; border-style:dashed; border-color:rgba(31,79,122,0.45); }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:var(--dim2); opacity:0.7; }
+.key.dead { opacity:1; border-style:dotted; border-color:rgba(31,79,122,0.45); }
+.key .sub { color:var(--sec); }
+.key.layerkey .sub { color:var(--sig-text); }
+
+.mapping { font-weight:500; font-size:calc(11px * var(--s)); letter-spacing:0.16em; color:var(--ink);
+  left:calc(28px * var(--s)); bottom:calc(24px * var(--s)); }
+.footer { display:none; }
+.tb { display:flex; position:absolute; right:calc(16px * var(--s)); bottom:calc(16px * var(--s)); z-index:2;
+  border:1.5px solid var(--line); background:var(--ground); font-family:'Martian Mono', monospace;
+  font-size:calc(9px * var(--s)); letter-spacing:0.08em; text-transform:uppercase; }
+.tb span { padding:calc(6px * var(--s)) calc(9px * var(--s)); border-left:1.5px solid var(--line); color:var(--sec); white-space:nowrap; }
+.tb span:first-child { border-left:0; }
+.tb span b { display:block; font-weight:500; color:var(--ink); margin-top:2px; letter-spacing:0.04em; }

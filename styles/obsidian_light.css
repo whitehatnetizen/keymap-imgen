@@ -1,0 +1,46 @@
+/* Obsidian light: black glass keys on a pale ash page; light, but the keys keep the dark. */
+@font-face { font-family:'Hanken Grotesk'; src:url('fonts/HankenGrotesk-variable-normal.woff2') format('woff2'); font-weight:100 900; }
+@font-face { font-family:'JetBrains Mono'; src:url('fonts/JetBrainsMono-variable-normal.woff2') format('woff2'); font-weight:100 800; }
+
+:root {
+  --ash:#c6c3bc; --ash-deep:#b3b0a8; --glass-top:#26262a; --glass-bottom:#111114; --edge:#0b0b0d; --edge-lit:#55555d;
+  --bone:#efeae0; --page-ink:#1a1a1d; --page-sec:#55554f;
+  --bg:var(--ash); --card:#1a1a1e; --ink:#e9e9ec; --sec:#9b9ba4; --line:var(--edge);
+  --acc:var(--bone); --brass:var(--page-sec); --heldbg:var(--bone); --held-ink:#0c0c0e;
+  --font-title:'Hanken Grotesk', system-ui, sans-serif;
+  --font-word:'Hanken Grotesk', system-ui, sans-serif;
+  --font-legend:'JetBrains Mono', monospace;
+  --font-label:'JetBrains Mono', monospace;
+}
+
+body { color:var(--page-ink); background:
+  radial-gradient(ellipse 70% 55% at 18% 0%, rgba(255,255,255,0.35) 0%, transparent 60%),
+  linear-gradient(180deg, var(--ash) 0%, var(--ash-deep) 100%); }
+
+.qtitle { font-weight:600; font-size:calc(20px * var(--s)); letter-spacing:-0.01em; color:var(--page-ink); }
+.qtitle .no { font-family:'JetBrains Mono', monospace; font-weight:500; font-size:calc(12px * var(--s)); letter-spacing:0.14em; color:var(--page-sec); vertical-align:middle; }
+.qtitle .dot { color:#8f8d86; }
+.qaccess { color:var(--page-sec); letter-spacing:0.16em; }
+.drule { height:0; border:0; border-top:1px solid var(--page-ink); margin-top:calc(8px * var(--s)); opacity:0.7; }
+
+.key { border-radius:calc(var(--u) * 0.09); border:1px solid var(--edge);
+  background:linear-gradient(170deg, var(--glass-top) 0%, var(--glass-bottom) 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.10), 0 2px 5px rgba(0,0,0,0.35); }
+.key .lg { font-weight:500; font-size:calc(var(--u) * 0.27); color:var(--ink); }
+.key .word { font-weight:500; font-size:calc(var(--u) * 0.16); letter-spacing:0.03em; color:var(--ink); }
+.key .combo, .key .tag { color:var(--ink); }
+.key.mod .lg, .key.mod .word, .key.mod .combo, .key.mod .tag { color:var(--sec); }
+.key.layerkey { border-color:var(--bone); box-shadow:inset 0 1px 0 rgba(255,255,255,0.14), 0 0 0 1.5px var(--page-ink), 0 2px 5px rgba(0,0,0,0.35); }
+.key.layerkey .lg, .key.layerkey .word { color:var(--bone); }
+.key.held { background:linear-gradient(170deg, #fbf8f1 0%, #e6e0d3 100%); border-color:var(--page-ink);
+  box-shadow:0 0 0 1.5px var(--page-ink), 0 2px 8px rgba(0,0,0,0.35); }
+.key.held .word, .key.held .lg, .key.held .sub { color:var(--held-ink); }
+.key.trns { opacity:1; background:rgba(20,20,24,0.18); border-color:rgba(20,20,24,0.35); box-shadow:none; }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:rgba(20,20,24,0.55); }
+.key.dead { opacity:1; background:transparent; border:1px dashed rgba(20,20,24,0.4); box-shadow:none; }
+.key .sub { color:var(--sec); }
+.key.layerkey .sub { color:var(--bone); }
+
+.mapping { font-weight:500; color:var(--page-ink); letter-spacing:0.24em; }
+.footer { color:var(--page-sec); }
+.footer .sep { color:var(--page-ink); }

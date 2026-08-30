@@ -1,0 +1,44 @@
+/* Solarized light: the same palette on its cream side, accents in the same roles. */
+@font-face { font-family:'Source Code Pro'; src:url('fonts/SourceCodePro-variable-normal.woff2') format('woff2'); font-weight:200 900; }
+@font-face { font-family:'Source Sans 3'; src:url('fonts/SourceSans3-variable-normal.woff2') format('woff2'); font-weight:200 900; }
+
+:root {
+  --base03:#002b36; --base02:#073642; --base01:#586e75; --base00:#657b83; --base0:#839496; --base1:#93a1a1; --base2:#eee8d5; --base3:#fdf6e3;
+  --yellow:#b58900; --orange:#cb4b16; --red:#dc322f; --magenta:#d33682; --violet:#6c71c4; --blue:#268bd2; --cyan:#2aa198; --green:#859900;
+  --bg:var(--base3); --card:transparent; --ink:var(--base01); --sec:var(--base00); --line:var(--base1);
+  --acc:var(--orange); --brass:var(--yellow); --heldbg:var(--orange); --held-ink:var(--base3);
+  --font-title:'Source Code Pro', monospace;
+  --font-word:'Source Sans 3', system-ui, sans-serif;
+  --font-legend:'Source Code Pro', monospace;
+  --font-label:'Source Code Pro', monospace;
+}
+
+body { background:var(--base3); }
+
+.qtitle { font-weight:600; font-size:calc(19px * var(--s)); color:var(--base02); }
+.qtitle .no { color:var(--yellow); }
+.qtitle .dot { color:var(--base1); }
+.qaccess { color:var(--green); letter-spacing:0.1em; text-transform:none; }
+.qaccess::before { content:"// "; color:var(--base1); }
+.drule { height:0; border:0; border-top:1px dashed var(--base1); margin-top:calc(8px * var(--s)); opacity:1; }
+
+.key { border-radius:0; border:1px solid var(--line); background:transparent; }
+.key .lg { font-weight:500; font-size:calc(var(--u) * 0.28); color:var(--base01); }
+.key .word { font-weight:600; font-size:calc(var(--u) * 0.16); color:var(--cyan); }
+.key .combo { color:var(--violet); }
+.key .tag { color:var(--magenta); }
+.key.mod { background:var(--base2); }
+.key.mod .lg, .key.mod .word, .key.mod .combo, .key.mod .tag { color:var(--blue); }
+.key.layerkey { border-color:var(--orange); }
+.key.layerkey .lg, .key.layerkey .word { color:var(--orange); }
+.key.held { background:var(--orange); border-color:var(--orange); }
+.key.held .word, .key.held .lg, .key.held .sub { color:var(--held-ink); }
+.key.trns { opacity:1; background:transparent; border:1px dashed #d6cfb8; }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:var(--base1); }
+.key.dead { opacity:1; background:transparent; border:1px dotted #d6cfb8; }
+.key .sub { color:var(--magenta); }
+.key.layerkey .sub { color:var(--orange); }
+
+.mapping { color:var(--yellow); letter-spacing:0.2em; }
+.footer { color:var(--base00); }
+.footer .sep { color:var(--green); }

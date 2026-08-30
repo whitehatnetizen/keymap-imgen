@@ -1,0 +1,10 @@
+{
+  "title": "crkbd qwerty",
+  "layers": [0, 1, 2],
+  "names": {
+    "0": "Base",
+    "1": "Numbers and symbols",
+    "2": "Navigation and media"
+  },
+  "labels": {}
+}

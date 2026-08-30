@@ -1,0 +1,12 @@
+{
+  "title": "qwerty",
+  "board": "corne46",
+  "layers": [0, 1, 2, 4],
+  "names": {
+    "0": "Base",
+    "1": "Function and numbers",
+    "2": "Symbols",
+    "4": "Navigation"
+  },
+  "labels": {}
+}

@@ -1,0 +1,43 @@
+/* Slate light: the whitewashed board, dark chalk on pale grey stone, ochre numbering. */
+@font-face { font-family:'Libre Franklin'; src:url('fonts/LibreFranklin-variable-normal.woff2') format('woff2'); font-weight:100 900; }
+@font-face { font-family:'Fragment Mono'; src:url('fonts/FragmentMono-400-normal.woff2') format('woff2'); font-weight:400; }
+
+:root {
+  --stone:#e4e6e3; --stone-deep:#d8dbd7; --chalk:#f6f7f4; --ink-dark:#2a2e31; --ink-dim:#6b7176; --ochre:#9a7420; --ochre-deep:#7d5d17;
+  --bg:var(--stone); --card:var(--chalk); --ink:var(--ink-dark); --sec:var(--ink-dim); --line:#b4b9bc;
+  --acc:var(--ochre); --brass:var(--ochre); --heldbg:var(--ochre); --held-ink:#fbf6ea;
+  --font-title:'Libre Franklin', system-ui, sans-serif;
+  --font-word:'Libre Franklin', system-ui, sans-serif;
+  --font-legend:'Fragment Mono', monospace;
+  --font-label:'Fragment Mono', monospace;
+}
+
+body { background:linear-gradient(180deg, var(--stone) 0%, var(--stone-deep) 100%); }
+/* the same faint hatch as the dark board, in dark chalk */
+.page::before { content:""; position:absolute; inset:0; z-index:0; opacity:0.05; pointer-events:none;
+  background:repeating-linear-gradient(115deg, rgba(42,46,49,0.9) 0px, rgba(42,46,49,0.9) 1px, transparent 1px, transparent 7px); }
+
+.qtitle { font-weight:800; font-size:calc(21px * var(--s)); letter-spacing:-0.015em; color:var(--ink-dark); }
+.qtitle .no { font-family:'Fragment Mono', monospace; font-weight:400; font-size:calc(12px * var(--s)); letter-spacing:0.12em; color:var(--ochre); vertical-align:middle; }
+.qtitle .dot { color:var(--line); }
+.qaccess { color:var(--ink-dim); letter-spacing:0.14em; }
+.drule { height:0; border:0; border-top:2px solid var(--ink-dark); margin-top:calc(8px * var(--s)); opacity:0.9; }
+
+.key { border-radius:0; border:1px solid var(--line); background:var(--card); }
+.key .lg { font-size:calc(var(--u) * 0.26); }
+.key .word { font-weight:600; font-size:calc(var(--u) * 0.155); letter-spacing:0.02em; }
+.key.mod { background:#eceeeb; }
+.key.mod .lg, .key.mod .word, .key.mod .combo, .key.mod .tag { color:var(--ink-dim); }
+.key.layerkey { border:1px solid var(--ochre); }
+.key.layerkey .lg, .key.layerkey .word { color:var(--ochre); }
+.key.held { background:var(--ochre); border-color:var(--ochre-deep); }
+.key.held .word, .key.held .lg, .key.held .sub { color:var(--held-ink); }
+.key.trns { opacity:1; background:transparent; border:1px dashed #c3c7c9; }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:#9aa0a4; }
+.key.dead { opacity:1; background:transparent; border:1px dotted #c3c7c9; }
+.key .sub { color:var(--ink-dim); }
+.key.layerkey .sub { color:var(--ochre); }
+
+.mapping { color:var(--ochre); letter-spacing:0.22em; }
+.footer { color:var(--ink-dim); }
+.footer .sep { color:var(--ochre); }

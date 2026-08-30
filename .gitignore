@@ -1,0 +1,20 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+# your keymaps and the pictures made from them stay on your machine
+/keymaps/*
+!/keymaps/.gitkeep
+/output/*
+!/output/.gitkeep
+# keymaps dropped in the top folder, and their outputs (the older way of working);
+# index.html is the command-builder page and is kept
+/*.vil
+/*.html
+!/index.html
+/*.png
+# rendered outputs of the sample; the README gallery uses docs/gallery instead
+/samples/*.html
+/samples/*.png
+/boards/qmk-index.partial.json
+# tests stay private (decision 2026-08-27); they live beside the code but never ship
+/tests/

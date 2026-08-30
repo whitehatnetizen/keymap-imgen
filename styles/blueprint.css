@@ -1,0 +1,60 @@
+/* Blueprint: cyanotype, white lines on Prussian blue, grid paper, drawing frame and title block. */
+@font-face { font-family:'Barlow'; src:url('fonts/Barlow-500-normal.woff2') format('woff2'); font-weight:500; }
+@font-face { font-family:'Barlow'; src:url('fonts/Barlow-700-normal.woff2') format('woff2'); font-weight:700; }
+@font-face { font-family:'Martian Mono'; src:url('fonts/MartianMono-400-normal.woff2') format('woff2'); font-weight:400 700; }
+
+:root {
+  --ground:#123a55; --ground-deep:#0d2c42;
+  --grid:rgba(228,238,247,0.10); --grid-major:rgba(228,238,247,0.15);
+  --sig:#ffa34d; --sig-text:#ffa34d; --dim2:#8aa9c4;
+  --bg:var(--ground); --card:transparent; --ink:#f2f7fb; --sec:#a9c2d8; --line:#e4eef7;
+  --acc:var(--sig); --brass:var(--sig-text); --heldbg:var(--sig); --held-ink:var(--ground-deep);
+  --font-title:'Barlow', system-ui, sans-serif;
+  --font-word:'Barlow', system-ui, sans-serif;
+  --font-legend:'Martian Mono', monospace;
+  --font-label:'Martian Mono', monospace;
+  --frame:2px;
+}
+
+body { background-color:var(--ground);
+  background-image:
+    linear-gradient(var(--grid-major) 1px, transparent 1px), linear-gradient(90deg, var(--grid-major) 1px, transparent 1px),
+    linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size:40px 40px, 40px 40px, 8px 8px, 8px 8px; }
+
+/* the sheet: drawing frame with corner marks */
+.frame { display:block; position:absolute; inset:calc(16px * var(--s)); border:var(--frame) solid var(--line); z-index:1; pointer-events:none; }
+.frame::before, .frame::after { content:""; position:absolute; width:calc(12px * var(--s)); height:calc(12px * var(--s)); border:var(--frame) solid var(--line); }
+.frame::before { left:calc(-8px * var(--s)); top:calc(-8px * var(--s)); border-right:0; border-bottom:0; }
+.frame::after { right:calc(-8px * var(--s)); bottom:calc(-8px * var(--s)); border-left:0; border-top:0; }
+
+.qtitle { font-weight:700; font-size:calc(20px * var(--s)); letter-spacing:-0.005em; color:var(--ink); }
+.qtitle .no { font-family:'Martian Mono', monospace; font-weight:500; font-size:calc(11px * var(--s)); letter-spacing:0.16em; text-transform:uppercase; color:var(--sig-text); vertical-align:middle; }
+.qtitle .dot { color:var(--dim2); }
+.qaccess { font-size:calc(9.5px * var(--s)); letter-spacing:0.14em; color:var(--sec); }
+.drule { height:0; border:0; border-top:1.5px solid var(--line); margin-top:calc(7px * var(--s)); opacity:1; }
+
+.key { border-radius:0; border:1.4px solid var(--line); background:transparent; }
+.key .lg { color:var(--ink); font-size:calc(var(--u) * 0.25); }
+.key .word { font-weight:500; font-size:calc(var(--u) * 0.16); }
+.key.mod .lg, .key.mod .word, .key.mod .combo, .key.mod .tag { color:var(--sec); }
+.key.layerkey { border:1.6px solid var(--sig); }
+.key.layerkey .lg, .key.layerkey .word { color:var(--sig-text); }
+.key.held { background:var(--sig); border-color:var(--sig); }
+.key.held .word, .key.held .lg, .key.held .sub { color:var(--held-ink); }
+.key.trns { opacity:1; border-style:dashed; border-color:var(--dim2); }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:var(--dim2); opacity:0.75; }
+.key.dead { opacity:1; border-style:dotted; border-color:var(--dim2); }
+.key .sub { color:var(--sec); }
+.key.layerkey .sub { color:var(--sig-text); }
+
+/* drawing label bottom-left, title block bottom-right; the centred footer is off */
+.mapping { font-weight:500; font-size:calc(11px * var(--s)); letter-spacing:0.16em; color:var(--ink);
+  left:calc(28px * var(--s)); bottom:calc(24px * var(--s)); }
+.footer { display:none; }
+.tb { display:flex; position:absolute; right:calc(16px * var(--s)); bottom:calc(16px * var(--s)); z-index:2;
+  border:1.5px solid var(--line); background:var(--ground); font-family:'Martian Mono', monospace;
+  font-size:calc(9px * var(--s)); letter-spacing:0.08em; text-transform:uppercase; }
+.tb span { padding:calc(6px * var(--s)) calc(9px * var(--s)); border-left:1.5px solid var(--line); color:var(--sec); white-space:nowrap; }
+.tb span:first-child { border-left:0; }
+.tb span b { display:block; font-weight:500; color:var(--ink); margin-top:2px; letter-spacing:0.04em; }

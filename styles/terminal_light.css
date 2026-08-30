@@ -1,0 +1,47 @@
+/* Terminal light: black on phosphor green, the same pixel type with the screen inverted. */
+@font-face { font-family:'VT323'; src:url('fonts/VT323-400-normal.woff2') format('woff2'); font-weight:400; }
+@font-face { font-family:'Share Tech Mono'; src:url('fonts/ShareTechMono-400-normal.woff2') format('woff2'); font-weight:400; }
+
+:root {
+  --screen:#8fdc7e; --screen-deep:#79c96a; --carbon:#06200c; --carbon-soft:#1f5a2a; --carbon-faint:#4d8a58; --hi:#f0ffb0;
+  --bg:var(--screen); --card:transparent; --ink:var(--carbon); --sec:var(--carbon-soft); --line:var(--carbon-soft);
+  --acc:var(--carbon); --brass:var(--carbon); --heldbg:var(--carbon); --held-ink:var(--hi);
+  --font-title:'VT323', monospace;
+  --font-word:'VT323', monospace;
+  --font-legend:'VT323', monospace;
+  --font-label:'Share Tech Mono', monospace;
+}
+
+body { color:var(--carbon); background:
+  radial-gradient(ellipse 80% 70% at 50% 50%, rgba(255,255,255,0.12) 0%, transparent 70%),
+  linear-gradient(180deg, var(--screen) 0%, var(--screen-deep) 100%); }
+.page::after { content:""; position:absolute; inset:0; z-index:3; pointer-events:none;
+  background:repeating-linear-gradient(180deg, rgba(0,40,10,0.10) 0px, rgba(0,40,10,0.10) 1px, transparent 1px, transparent 3px); }
+
+.qtitle { font-weight:400; font-size:calc(27px * var(--s)); letter-spacing:0.02em; color:var(--carbon); }
+.qtitle::before { content:"> "; color:var(--carbon-soft); }
+.qtitle .no { color:var(--carbon); }
+.qtitle .dot { color:var(--carbon-soft); }
+.qaccess { font-size:calc(9.5px * var(--s)); color:var(--carbon-soft); letter-spacing:0.18em; }
+.drule { height:0; border:0; border-top:1px dashed var(--carbon-soft); margin-top:calc(8px * var(--s)); opacity:1; }
+
+.key { border-radius:0; border:1px solid var(--carbon-soft); background:rgba(255,255,255,0.10); }
+.key .lg { font-size:calc(var(--u) * 0.36); line-height:1; }
+.key .word { font-weight:400; font-size:calc(var(--u) * 0.22); letter-spacing:0.02em; }
+.key .combo { font-size:calc(var(--u) * 0.2); line-height:1.05; }
+.key .tag { font-size:calc(var(--u) * 0.17); line-height:1.05; }
+.key.mod .lg, .key.mod .word, .key.mod .combo, .key.mod .tag { color:var(--carbon-soft); }
+.key.layerkey { border:2px solid var(--carbon); }
+.key.layerkey .lg, .key.layerkey .word { color:var(--carbon); }
+.key.held { background:var(--carbon); border-color:var(--carbon); }
+.key.held .word, .key.held .lg, .key.held .sub { color:var(--held-ink); }
+.key.trns { opacity:1; background:transparent; border-color:var(--carbon-faint); }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:var(--carbon-faint); }
+.key.dead { opacity:1; background:transparent; border:1px dotted var(--carbon-faint); }
+.key .sub { color:var(--carbon-soft); }
+.key.layerkey .sub { color:var(--carbon); }
+
+.mapping { font-family:'VT323', monospace; font-size:calc(17px * var(--s)); letter-spacing:0.1em; color:var(--carbon); text-transform:none; }
+.mapping::after { content:"_"; margin-left:0.2em; }
+.footer { color:var(--carbon-soft); }
+.footer .sep { color:var(--carbon); }

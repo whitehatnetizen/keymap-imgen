@@ -1,0 +1,10 @@
+# What the tool needs. Install with:  python -m pip install -r requirements.txt
+# then, once:                            playwright install chromium
+#
+# The drawing runs in a headless Chromium through Playwright (about 150 MB on first install).
+playwright>=1.40
+
+# Optional. Reading a keymap straight from a Vial keyboard on the command line (--from-usb):
+#   python -m pip install hidapi>=0.14
+# Optional, maintainers only. tools/make_gallery.py assembles the README pictures:
+#   python -m pip install pillow

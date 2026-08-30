@@ -1,0 +1,53 @@
+/* Base sheet: structure only. Every style loads on top of this and sets the tokens
+   (--bg --card --ink --sec --line --acc --brass --heldbg --held-ink) and the four font
+   stacks (--font-title --font-legend --font-word --font-label). --s is the page scale
+   (1 at 1920x1080), --u is the key pitch in px, both set by the renderer. */
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { overflow:hidden; }
+body { background:var(--bg, #ffffff); color:var(--ink, #111111); position:relative;
+  font-family:var(--font-word, system-ui, sans-serif); }
+.page { position:relative; width:100%; height:100%; }
+/* two screens side by side: each panel is a whole page of its own, with its own copy of the
+   body background, clipped at the seam so nothing crosses from one screen to the other */
+body.dual .page { position:absolute; top:0; overflow:hidden; background:inherit; }
+.grid { position:relative; z-index:2; display:grid; width:100%; height:100%; }
+.quad { position:relative; display:flex; flex-direction:column; min-height:0; min-width:0; }
+.qhead { margin-bottom:calc(6px * var(--s)); }
+.qtitle { font-family:var(--font-title, Georgia, serif); font-weight:700; font-size:calc(21px * var(--s)); letter-spacing:0.01em; }
+.qtitle .no { color:var(--brass, var(--acc, #111111)); }
+.qaccess { font-family:var(--font-label, monospace); font-size:calc(9px * var(--s)); letter-spacing:0.15em;
+  color:var(--sec, #666666); text-transform:uppercase; margin-top:calc(3px * var(--s)); }
+.drule { height:calc(5px * var(--s)); border-top:calc(2px * var(--s)) solid var(--ink, #111111);
+  border-bottom:1px solid var(--ink, #111111); margin-top:calc(7px * var(--s)); opacity:0.85; }
+.boardwrap { flex:1; min-height:0; display:flex; align-items:center; justify-content:center; }
+.board { position:relative; flex:none; }
+
+.key { position:absolute; background:var(--card, #ffffff); border:1px solid var(--line, #999999); border-radius:2px;
+  display:flex; align-items:center; justify-content:center; text-align:center; overflow:hidden; }
+.key .lg { font-family:var(--font-legend, monospace); font-size:calc(var(--u) * 0.27); line-height:1.1; }
+.key .word { font-family:var(--font-word, system-ui, sans-serif); font-weight:500; font-size:calc(var(--u) * 0.17); letter-spacing:0.02em; }
+.key .combo { font-family:var(--font-word, system-ui, sans-serif); font-weight:600; font-size:calc(var(--u) * 0.15); line-height:1.25;
+  letter-spacing:0.01em; padding:0 calc(var(--u) * 0.04); }
+.key .tag { font-family:var(--font-word, system-ui, sans-serif); font-weight:500; font-size:calc(var(--u) * 0.125); line-height:1.25;
+  letter-spacing:0.01em; padding:0 calc(var(--u) * 0.05); color:var(--sec, #666666); overflow-wrap:anywhere; }
+.key.mod .lg, .key.mod .word, .key.mod .combo, .key.mod .tag { color:var(--sec, #666666); }
+.key.layerkey { border-color:var(--acc, #111111); }
+.key.layerkey .lg, .key.layerkey .word { color:var(--acc, #111111); }
+.key.held { background:var(--heldbg, #111111); border-color:var(--acc, #111111); }
+.key.held .word, .key.held .lg { color:var(--held-ink, var(--acc, #111111)); }
+.key.trns { opacity:0.30; }
+.key.dead { opacity:0.35; }
+.key .sub { position:absolute; bottom:calc(var(--u) * 0.035); left:0; right:0; font-family:var(--font-label, monospace);
+  font-size:calc(var(--u) * 0.116 * var(--subfit, 1)); letter-spacing:0.08em; color:var(--sec, #666666); text-transform:uppercase; }
+.key.held .sub, .key.layerkey .sub { color:var(--held-ink, var(--acc, #111111)); }
+.key.layerkey .sub { color:var(--acc, #111111); }
+
+.mapping { position:absolute; left:var(--pad-x); bottom:calc(9px * var(--s)); z-index:2;
+  font-family:var(--font-label, monospace); font-size:calc(11px * var(--s)); letter-spacing:0.18em;
+  color:var(--acc, #111111); text-transform:uppercase; }
+.footer { position:absolute; left:0; right:0; bottom:calc(9px * var(--s)); z-index:2; text-align:center;
+  font-family:var(--font-label, monospace); font-size:calc(9px * var(--s)); letter-spacing:0.16em;
+  color:var(--sec, #666666); text-transform:uppercase; }
+.footer .sep { color:var(--brass, var(--acc, #111111)); }
+/* drawing-sheet chrome, used by the blueprint styles and hidden otherwise */
+.frame, .tb { display:none; }

@@ -1,0 +1,10 @@
+# Line endings: LF in the repository and in every checkout, whatever the platform.
+# The page fetches styles/_base.css as served and the tool inlines the same file, so
+# a CRLF copy breaks the match between the two.
+* text=auto eol=lf
+# Windows batch files are the one exception: cmd.exe reads them best with CRLF.
+*.bat text eol=crlf
+# Never converted.
+*.png binary
+*.woff2 binary
+*.gz binary

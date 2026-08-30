@@ -1,0 +1,57 @@
+/* Cyberpunk light: black chamfered keys on a hazard-yellow page, cyan for the layer keys. */
+@font-face { font-family:'Chakra Petch'; src:url('fonts/ChakraPetch-400-normal.woff2') format('woff2'); font-weight:400; }
+@font-face { font-family:'Chakra Petch'; src:url('fonts/ChakraPetch-600-normal.woff2') format('woff2'); font-weight:600; }
+@font-face { font-family:'Chakra Petch'; src:url('fonts/ChakraPetch-700-normal.woff2') format('woff2'); font-weight:700; }
+@font-face { font-family:'JetBrains Mono'; src:url('fonts/JetBrainsMono-variable-normal.woff2') format('woff2'); font-weight:100 800; }
+
+:root {
+  --yellow:#fcee0a; --yellow-deep:#e6d900; --void:#0b0b0d; --panel:#141417; --panel-deep:#0e0e11; --steel:#3a3a42;
+  --cyan:#00e5f5; --cyan-deep:#00b8c6; --page-ink:#0b0b0d; --page-sec:#5a5500;
+  --bg:var(--yellow); --card:var(--panel); --ink:#f2f2ee; --sec:#9a9aa4; --line:var(--steel);
+  --acc:var(--cyan); --brass:var(--void); --heldbg:var(--cyan); --held-ink:var(--void);
+  --font-title:'Chakra Petch', system-ui, sans-serif;
+  --font-word:'Chakra Petch', system-ui, sans-serif;
+  --font-legend:'JetBrains Mono', monospace;
+  --font-label:'JetBrains Mono', monospace;
+  --chamfer:calc(var(--u) * 0.16);
+}
+
+body { color:var(--page-ink); background:
+  linear-gradient(115deg, transparent 0 62%, rgba(11,11,13,0.10) 62% 62.4%, transparent 62.4% 66%, rgba(11,11,13,0.08) 66% 80%, transparent 80%),
+  linear-gradient(180deg, var(--yellow) 0%, var(--yellow-deep) 100%); }
+/* hazard tape along the top edge and a black hairline under it */
+.page::before { content:""; position:absolute; left:0; right:0; top:0; height:calc(7px * var(--s)); z-index:1;
+  background:repeating-linear-gradient(-45deg, var(--void) 0, var(--void) calc(14px * var(--s)), transparent calc(14px * var(--s)), transparent calc(28px * var(--s))); }
+.page::after { content:""; position:absolute; left:0; right:0; top:calc(7px * var(--s)); height:1px; z-index:1; background:var(--void); opacity:0.6; }
+
+.qtitle { font-weight:700; font-size:calc(20px * var(--s)); letter-spacing:0.06em; text-transform:uppercase; color:var(--page-ink); }
+.qtitle .no { display:inline-block; font-family:'JetBrains Mono', monospace; font-weight:700; font-size:calc(11px * var(--s)); letter-spacing:0.1em;
+  color:var(--yellow); background:var(--void); padding:calc(1px * var(--s)) calc(6px * var(--s)); margin-right:calc(4px * var(--s)); vertical-align:middle;
+  clip-path:polygon(0 0, 100% 0, 100% 65%, calc(100% - 5px) 100%, 0 100%); }
+.qtitle .dot { display:none; }
+.qaccess { color:var(--page-ink); opacity:0.7; letter-spacing:0.2em; }
+.drule { height:calc(3px * var(--s)); border:0; margin-top:calc(8px * var(--s)); opacity:1;
+  background:linear-gradient(90deg, var(--void) 0 30%, rgba(11,11,13,0.25) 30% 100%); }
+
+.key { border-radius:0; border:0; background:linear-gradient(180deg, var(--panel) 0%, var(--panel-deep) 100%);
+  box-shadow:inset 0 0 0 1px var(--steel);
+  clip-path:polygon(0 0, 100% 0, 100% calc(100% - var(--chamfer)), calc(100% - var(--chamfer)) 100%, 0 100%); }
+.key .lg { font-weight:600; font-size:calc(var(--u) * 0.27); color:var(--ink); }
+.key .word { font-weight:600; font-size:calc(var(--u) * 0.16); letter-spacing:0.06em; text-transform:uppercase; color:var(--ink); }
+.key .combo, .key .tag { font-weight:600; letter-spacing:0.03em; color:var(--ink); }
+.key.mod .lg, .key.mod .word, .key.mod .combo, .key.mod .tag { color:var(--sec); }
+.key.layerkey { box-shadow:inset 0 0 0 1.5px var(--cyan); }
+.key.layerkey .lg, .key.layerkey .word { color:var(--cyan); }
+.key.held { background:var(--cyan); box-shadow:inset 0 0 0 1px var(--cyan-deep); }
+.key.held .word, .key.held .lg, .key.held .sub { color:var(--held-ink); }
+.key.trns { opacity:1; background:rgba(11,11,13,0.10); box-shadow:inset 0 0 0 1px rgba(11,11,13,0.35); }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:rgba(11,11,13,0.55); }
+.key.dead { opacity:1; background:repeating-linear-gradient(-45deg, transparent 0 4px, rgba(11,11,13,0.22) 4px 6px); box-shadow:inset 0 0 0 1px rgba(11,11,13,0.35); }
+.key .sub { color:var(--cyan); }
+.key.layerkey .sub { color:var(--cyan); }
+
+.mapping { font-family:'Chakra Petch', system-ui, sans-serif; font-weight:700; font-size:calc(12px * var(--s)); letter-spacing:0.28em;
+  color:var(--yellow); background:var(--void); padding:calc(3px * var(--s)) calc(10px * var(--s));
+  clip-path:polygon(0 0, 100% 0, 100% 60%, calc(100% - 8px) 100%, 0 100%); }
+.footer { color:var(--page-ink); opacity:0.75; }
+.footer .sep { color:var(--cyan-deep); }

@@ -1,0 +1,48 @@
+/* Terminal: green phosphor on black, pixel type, scanlines. */
+@font-face { font-family:'VT323'; src:url('fonts/VT323-400-normal.woff2') format('woff2'); font-weight:400; }
+@font-face { font-family:'Share Tech Mono'; src:url('fonts/ShareTechMono-400-normal.woff2') format('woff2'); font-weight:400; }
+
+:root {
+  --crt:#020a04; --phosphor:#39ff6e; --phosphor-soft:#7dffa0; --phosphor-dim:#1f9b45; --phosphor-deep:#0f4d22; --amber:#d0ff70;
+  --bg:var(--crt); --card:transparent; --ink:var(--phosphor); --sec:var(--phosphor-dim); --line:var(--phosphor-dim);
+  --acc:var(--amber); --brass:var(--phosphor-soft); --heldbg:var(--phosphor); --held-ink:#021a08;
+  --font-title:'VT323', monospace;
+  --font-word:'VT323', monospace;
+  --font-legend:'VT323', monospace;
+  --font-label:'Share Tech Mono', monospace;
+  --glow:0 0 calc(6px * var(--s)) rgba(57,255,110,0.55);
+}
+
+body { color:var(--phosphor); background:
+  radial-gradient(ellipse 80% 70% at 50% 50%, rgba(57,255,110,0.06) 0%, transparent 70%), var(--crt); }
+/* scanlines and a slow vertical fade toward the screen edge */
+.page::after { content:""; position:absolute; inset:0; z-index:3; pointer-events:none;
+  background:repeating-linear-gradient(180deg, rgba(0,0,0,0.28) 0px, rgba(0,0,0,0.28) 1px, transparent 1px, transparent 3px); }
+
+.qtitle { font-weight:400; font-size:calc(27px * var(--s)); letter-spacing:0.02em; color:var(--phosphor); text-shadow:var(--glow); }
+.qtitle::before { content:"> "; color:var(--phosphor-dim); }
+.qtitle .no { color:var(--phosphor-soft); }
+.qtitle .dot { color:var(--phosphor-dim); }
+.qaccess { font-size:calc(9.5px * var(--s)); color:var(--phosphor-dim); letter-spacing:0.18em; text-shadow:none; }
+.drule { height:0; border:0; border-top:1px dashed var(--phosphor-dim); margin-top:calc(8px * var(--s)); opacity:1; }
+
+.key { border-radius:0; border:1px solid var(--phosphor-dim); background:transparent; box-shadow:inset 0 0 0 1px rgba(57,255,110,0.06); }
+.key .lg { font-size:calc(var(--u) * 0.36); line-height:1; text-shadow:var(--glow); }
+.key .word { font-weight:400; font-size:calc(var(--u) * 0.22); letter-spacing:0.02em; text-shadow:var(--glow); }
+.key .combo { font-size:calc(var(--u) * 0.2); line-height:1.05; text-shadow:var(--glow); }
+.key .tag { font-size:calc(var(--u) * 0.17); line-height:1.05; }
+.key.mod .lg, .key.mod .word, .key.mod .combo, .key.mod .tag { color:var(--phosphor-dim); text-shadow:none; }
+.key.layerkey { border:1px solid var(--amber); box-shadow:0 0 calc(8px * var(--s)) rgba(208,255,112,0.3); }
+.key.layerkey .lg, .key.layerkey .word { color:var(--amber); text-shadow:0 0 calc(6px * var(--s)) rgba(208,255,112,0.6); }
+.key.held { background:var(--phosphor); border-color:var(--phosphor-soft); box-shadow:0 0 calc(14px * var(--s)) rgba(57,255,110,0.55); }
+.key.held .word, .key.held .lg, .key.held .sub { color:var(--held-ink); text-shadow:none; }
+.key.trns { opacity:1; border-color:var(--phosphor-deep); box-shadow:none; }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:var(--phosphor-deep); text-shadow:none; }
+.key.dead { opacity:1; border:1px dotted var(--phosphor-deep); box-shadow:none; }
+.key .sub { color:var(--phosphor-dim); }
+.key.layerkey .sub { color:var(--amber); }
+
+.mapping { font-family:'VT323', monospace; font-size:calc(17px * var(--s)); letter-spacing:0.1em; color:var(--phosphor); text-shadow:var(--glow); text-transform:none; }
+.mapping::after { content:"_"; margin-left:0.2em; }
+.footer { color:var(--phosphor-dim); }
+.footer .sep { color:var(--phosphor-soft); }

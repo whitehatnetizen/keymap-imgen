@@ -1,0 +1,51 @@
+/* Bubblegum: candy colours, round keys in four pastel flavours, polka-dot pink page. */
+@font-face { font-family:'Fredoka'; src:url('fonts/Fredoka-variable-normal.woff2') format('woff2'); font-weight:300 700; }
+@font-face { font-family:'Nunito'; src:url('fonts/Nunito-variable-normal.woff2') format('woff2'); font-weight:400 900; }
+
+:root {
+  --pink:#ffd3e6; --pink-deep:#ffb8d6; --gum:#ff4f9a; --gum-deep:#d92c78; --mint:#bff3e6; --lemon:#fff3b0; --lilac:#e4d4ff; --peach:#ffd9c2;
+  --plum:#5a2550; --plum-soft:#9a5a8a; --orange:#ff8c42; --teal:#1fb5a3;
+  --bg:var(--pink); --card:#fffdfa; --ink:var(--plum); --sec:var(--plum-soft); --line:#f3a5c8;
+  --acc:var(--teal); --brass:var(--orange); --heldbg:var(--gum); --held-ink:#fff7fb;
+  --font-title:'Fredoka', system-ui, sans-serif;
+  --font-word:'Fredoka', system-ui, sans-serif;
+  --font-legend:'Fredoka', system-ui, sans-serif;
+  --font-label:'Nunito', system-ui, sans-serif;
+}
+
+body { background-color:var(--pink);
+  background-image:radial-gradient(rgba(255,255,255,0.75) calc(3.5px * var(--s)), transparent calc(4px * var(--s)));
+  background-size:calc(34px * var(--s)) calc(34px * var(--s)); background-position:0 0; }
+
+.qtitle { font-weight:700; font-size:calc(22px * var(--s)); letter-spacing:0.01em; color:var(--plum); }
+.qtitle .no { color:var(--orange); }
+.qtitle .dot { color:var(--gum); }
+.qaccess { font-weight:800; font-size:calc(9.5px * var(--s)); color:var(--plum-soft); letter-spacing:0.14em; }
+/* candy-stripe rule */
+.drule { height:calc(6px * var(--s)); border:0; border-radius:calc(3px * var(--s)); margin-top:calc(8px * var(--s)); opacity:1;
+  background:repeating-linear-gradient(-45deg, var(--gum) 0, var(--gum) calc(7px * var(--s)), #fff calc(7px * var(--s)), #fff calc(14px * var(--s))); }
+
+.key { border-radius:calc(var(--u) * 0.28); border:2px solid var(--line); background:var(--card);
+  box-shadow:0 calc(var(--u) * 0.05) 0 var(--pink-deep); }
+/* four flavours, dealt by position */
+.key:nth-child(4n+1) { background:var(--mint); border-color:#7fd9c6; box-shadow:0 calc(var(--u) * 0.05) 0 #8fd6c6; }
+.key:nth-child(4n+2) { background:var(--lemon); border-color:#f2d16b; box-shadow:0 calc(var(--u) * 0.05) 0 #e6c76a; }
+.key:nth-child(4n+3) { background:var(--lilac); border-color:#c2a6f2; box-shadow:0 calc(var(--u) * 0.05) 0 #c0a8ea; }
+.key:nth-child(4n+4) { background:var(--peach); border-color:#f6b48c; box-shadow:0 calc(var(--u) * 0.05) 0 #efb08a; }
+.key .lg { font-weight:600; font-size:calc(var(--u) * 0.3); }
+.key .word { font-weight:600; font-size:calc(var(--u) * 0.165); letter-spacing:0.01em; }
+.key .combo, .key .tag { font-family:'Nunito', system-ui, sans-serif; font-weight:800; }
+.key.mod .lg, .key.mod .word, .key.mod .combo, .key.mod .tag { color:var(--plum-soft); }
+.key.layerkey { border-color:var(--teal); }
+.key.layerkey .lg, .key.layerkey .word { color:#0f8a7a; }
+.key.held, .key.held:nth-child(n) { background:var(--gum); border-color:var(--gum-deep); box-shadow:0 calc(var(--u) * 0.05) 0 var(--gum-deep); }
+.key.held .word, .key.held .lg, .key.held .sub { color:var(--held-ink); }
+.key.trns, .key.trns:nth-child(n) { opacity:1; background:rgba(255,255,255,0.55); border:2px dashed #f3a5c8; box-shadow:none; }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:#c98ab0; }
+.key.dead, .key.dead:nth-child(n) { opacity:1; background:rgba(255,255,255,0.35); border:2px dotted #f3a5c8; box-shadow:none; }
+.key .sub { font-weight:800; color:var(--plum-soft); }
+.key.layerkey .sub { color:#0f8a7a; }
+
+.mapping { font-weight:900; font-size:calc(13px * var(--s)); color:var(--gum-deep); letter-spacing:0.2em; }
+.footer { font-weight:800; color:var(--plum-soft); }
+.footer .sep { color:var(--orange); }

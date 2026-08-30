@@ -1,0 +1,51 @@
+/* Sakura: petal-pink keys on warm washi, plum-grey ink, a bark-brown rule; dusty tones, nothing candied. */
+@font-face { font-family:'Shippori Mincho'; src:url('fonts/ShipporiMincho-400-normal.woff2') format('woff2'); font-weight:400; }
+@font-face { font-family:'Shippori Mincho'; src:url('fonts/ShipporiMincho-700-normal.woff2') format('woff2'); font-weight:700; }
+@font-face { font-family:'Zen Kaku Gothic New'; src:url('fonts/ZenKakuGothicNew-400-normal.woff2') format('woff2'); font-weight:400; }
+@font-face { font-family:'Zen Kaku Gothic New'; src:url('fonts/ZenKakuGothicNew-500-normal.woff2') format('woff2'); font-weight:500; }
+@font-face { font-family:'Zen Kaku Gothic New'; src:url('fonts/ZenKakuGothicNew-700-normal.woff2') format('woff2'); font-weight:700; }
+@font-face { font-family:'Fragment Mono'; src:url('fonts/FragmentMono-400-normal.woff2') format('woff2'); font-weight:400; }
+
+:root {
+  --washi:#fbf6f3; --washi-deep:#f5ebe8;
+  --petal:#f6e3e7; --petal-deep:#efd3da; --petal-edge:#dfbfc7; --petal-shadow:#e4c8cf;
+  --rose:#c98d9c; --rose-deep:#a9657a; --rose-dark:#8a4f62;
+  --bark:#6b5049; --plum:#4a3b43; --plum-soft:#8a747c;
+  --bg:var(--washi); --card:var(--petal); --ink:var(--plum); --sec:var(--plum-soft); --line:var(--petal-edge);
+  --acc:var(--rose-deep); --brass:var(--bark); --heldbg:var(--rose); --held-ink:#fff8f9;
+  --font-title:'Shippori Mincho', Georgia, serif;
+  --font-word:'Zen Kaku Gothic New', system-ui, sans-serif;
+  --font-legend:'Zen Kaku Gothic New', system-ui, sans-serif;
+  --font-label:'Fragment Mono', monospace;
+}
+
+body { background:linear-gradient(180deg, var(--washi) 0%, var(--washi-deep) 100%); }
+
+.qtitle { font-weight:700; font-size:calc(23px * var(--s)); letter-spacing:0.01em; color:var(--ink); }
+.qtitle .no { font-family:'Fragment Mono', monospace; font-weight:400; font-size:calc(11px * var(--s)); letter-spacing:0.16em; text-transform:uppercase; color:var(--rose-deep); vertical-align:middle; }
+.qtitle .dot { color:var(--rose); }
+.qaccess { color:var(--sec); letter-spacing:0.16em; }
+/* a bark line with a petal line beneath it */
+.drule { height:calc(6px * var(--s)); border:0; border-top:calc(2px * var(--s)) solid var(--bark); border-bottom:1px solid var(--rose); margin-top:calc(7px * var(--s)); opacity:1; }
+
+.key { border-radius:calc(var(--u) * 0.14); border:1px solid var(--petal-edge); background:var(--petal);
+  box-shadow:0 calc(var(--u) * 0.04) 0 var(--petal-shadow); }
+.key .lg { font-weight:500; font-size:calc(var(--u) * 0.3); }
+.key .word { font-weight:500; font-size:calc(var(--u) * 0.16); letter-spacing:0.02em; }
+.key .combo { font-weight:700; }
+.key .tag { font-weight:500; color:var(--sec); }
+.key.mod { background:var(--petal-deep); }
+.key.mod .lg, .key.mod .word, .key.mod .combo, .key.mod .tag { color:var(--plum-soft); }
+.key.layerkey { border-color:var(--rose-deep); box-shadow:inset 0 0 0 1px var(--rose-deep), 0 calc(var(--u) * 0.04) 0 var(--petal-shadow); }
+.key.layerkey .lg, .key.layerkey .word { color:var(--rose-dark); }
+.key.held { background:var(--heldbg); border-color:var(--rose-deep); box-shadow:0 calc(var(--u) * 0.04) 0 var(--rose-deep); }
+.key.held .word, .key.held .lg, .key.held .sub { color:var(--held-ink); }
+.key.trns { opacity:1; background:transparent; border:1px dashed var(--petal-edge); box-shadow:none; }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:#c9a6ae; }
+.key.dead { opacity:1; background:transparent; border:1px dotted var(--petal-edge); box-shadow:none; }
+.key .sub { font-weight:500; color:var(--plum-soft); }
+.key.layerkey .sub { color:var(--rose-dark); }
+
+.mapping { font-weight:400; color:var(--ink); letter-spacing:0.22em; }
+.footer { color:var(--sec); }
+.footer .sep { color:var(--rose); }

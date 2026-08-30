@@ -1,0 +1,10 @@
+{
+  "title": "dz60 qwerty",
+  "layers": [0, 1, 2],
+  "names": {
+    "0": "Base",
+    "1": "Function",
+    "2": "Navigation"
+  },
+  "labels": {}
+}

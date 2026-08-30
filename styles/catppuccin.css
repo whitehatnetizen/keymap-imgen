@@ -1,0 +1,42 @@
+/* Catppuccin: the Mocha flavour, soft rounded keys, mauve for layers, peach numbering. */
+@font-face { font-family:'Nunito'; src:url('fonts/Nunito-variable-normal.woff2') format('woff2'); font-weight:400 900; }
+@font-face { font-family:'JetBrains Mono'; src:url('fonts/JetBrainsMono-variable-normal.woff2') format('woff2'); font-weight:100 800; }
+
+:root {
+  --base:#1e1e2e; --mantle:#181825; --crust:#11111b; --surface0:#313244; --surface1:#45475a; --overlay0:#6c7086;
+  --text:#cdd6f4; --subtext0:#a6adc8; --mauve:#cba6f7; --pink:#f5c2e7; --blue:#89b4fa; --peach:#fab387; --yellow:#f9e2af; --lavender:#b4befe; --teal:#94e2d5;
+  --bg:var(--base); --card:var(--surface0); --ink:var(--text); --sec:var(--subtext0); --line:var(--surface1);
+  --acc:var(--mauve); --brass:var(--peach); --heldbg:var(--mauve); --held-ink:var(--crust);
+  --font-title:'Nunito', system-ui, sans-serif;
+  --font-word:'Nunito', system-ui, sans-serif;
+  --font-legend:'JetBrains Mono', monospace;
+  --font-label:'JetBrains Mono', monospace;
+}
+
+body { background:linear-gradient(180deg, var(--base) 0%, var(--mantle) 100%); }
+
+.qtitle { font-weight:800; font-size:calc(22px * var(--s)); color:var(--text); }
+.qtitle .no { color:var(--peach); }
+.qtitle .dot { color:var(--overlay0); }
+.qaccess { font-weight:600; color:var(--subtext0); letter-spacing:0.12em; }
+.drule { height:calc(4px * var(--s)); border:0; border-radius:calc(2px * var(--s)); margin-top:calc(8px * var(--s)); opacity:1;
+  background:linear-gradient(90deg, var(--mauve), var(--pink) 50%, var(--peach)); }
+
+.key { border-radius:calc(var(--u) * 0.2); border:1px solid var(--line); background:var(--card); box-shadow:0 2px 0 var(--crust); }
+.key .lg { font-weight:600; font-size:calc(var(--u) * 0.27); }
+.key .word { font-weight:800; font-size:calc(var(--u) * 0.155); }
+.key.mod { background:var(--mantle); }
+.key.mod .lg, .key.mod .word, .key.mod .combo, .key.mod .tag { color:var(--subtext0); }
+.key.layerkey { border-color:var(--mauve); }
+.key.layerkey .lg, .key.layerkey .word { color:var(--mauve); }
+.key.held { background:var(--mauve); border-color:var(--mauve); box-shadow:0 2px 0 #8f6fc4; }
+.key.held .word, .key.held .lg, .key.held .sub { color:var(--held-ink); }
+.key.trns { opacity:1; background:transparent; border:1px dashed var(--surface1); box-shadow:none; }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:var(--overlay0); }
+.key.dead { opacity:1; background:transparent; border:1px dotted var(--surface1); box-shadow:none; }
+.key .sub { font-weight:700; color:var(--teal); }
+.key.layerkey .sub { color:var(--mauve); }
+
+.mapping { font-weight:800; color:var(--lavender); letter-spacing:0.2em; }
+.footer { font-weight:600; color:var(--subtext0); }
+.footer .sep { color:var(--peach); }

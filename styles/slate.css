@@ -1,0 +1,43 @@
+/* Slate: chalk on grey slate, ochre numbering, square keys, no shadows. */
+@font-face { font-family:'Libre Franklin'; src:url('fonts/LibreFranklin-variable-normal.woff2') format('woff2'); font-weight:100 900; }
+@font-face { font-family:'Fragment Mono'; src:url('fonts/FragmentMono-400-normal.woff2') format('woff2'); font-weight:400; }
+
+:root {
+  --slate:#2f3336; --slate-deep:#272b2e; --chalk:#e6e4dc; --chalk-dim:#a9aca8; --ochre:#d3a94c; --ochre-deep:#b48c36;
+  --bg:var(--slate); --card:#3a3f43; --ink:var(--chalk); --sec:var(--chalk-dim); --line:#575d62;
+  --acc:var(--ochre); --brass:var(--ochre); --heldbg:var(--ochre); --held-ink:#241c08;
+  --font-title:'Libre Franklin', system-ui, sans-serif;
+  --font-word:'Libre Franklin', system-ui, sans-serif;
+  --font-legend:'Fragment Mono', monospace;
+  --font-label:'Fragment Mono', monospace;
+}
+
+body { background:linear-gradient(180deg, var(--slate) 0%, var(--slate-deep) 100%); }
+/* faint chalk dust, a diagonal hatch at very low opacity */
+.page::before { content:""; position:absolute; inset:0; z-index:0; opacity:0.05; pointer-events:none;
+  background:repeating-linear-gradient(115deg, rgba(230,228,220,0.9) 0px, rgba(230,228,220,0.9) 1px, transparent 1px, transparent 7px); }
+
+.qtitle { font-weight:800; font-size:calc(21px * var(--s)); letter-spacing:-0.015em; color:var(--chalk); }
+.qtitle .no { font-family:'Fragment Mono', monospace; font-weight:400; font-size:calc(12px * var(--s)); letter-spacing:0.12em; color:var(--ochre); vertical-align:middle; }
+.qtitle .dot { color:var(--line); }
+.qaccess { color:var(--chalk-dim); letter-spacing:0.14em; }
+.drule { height:0; border:0; border-top:2px solid var(--chalk); margin-top:calc(8px * var(--s)); opacity:0.9; }
+
+.key { border-radius:0; border:1px solid var(--line); background:var(--card); }
+.key .lg { font-size:calc(var(--u) * 0.26); }
+.key .word { font-weight:600; font-size:calc(var(--u) * 0.155); letter-spacing:0.02em; }
+.key.mod { background:#33383c; }
+.key.mod .lg, .key.mod .word, .key.mod .combo, .key.mod .tag { color:var(--chalk-dim); }
+.key.layerkey { border:1px solid var(--ochre); }
+.key.layerkey .lg, .key.layerkey .word { color:var(--ochre); }
+.key.held { background:var(--ochre); border-color:var(--ochre-deep); }
+.key.held .word, .key.held .lg, .key.held .sub { color:var(--held-ink); }
+.key.trns { opacity:1; background:transparent; border:1px dashed #4c5256; }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:#6f7579; }
+.key.dead { opacity:1; background:transparent; border:1px dotted #4c5256; }
+.key .sub { color:var(--chalk-dim); }
+.key.layerkey .sub { color:var(--ochre); }
+
+.mapping { color:var(--ochre); letter-spacing:0.22em; }
+.footer { color:var(--chalk-dim); }
+.footer .sep { color:var(--ochre); }

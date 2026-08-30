@@ -1,0 +1,30 @@
+/* Plain, cream: the printer card on a warm paper tint; black outlines, no fills, no webfonts. */
+:root {
+  --bg:#f6f1e6; --card:transparent; --ink:#111111; --sec:#3d3a35; --line:#111111;
+  --acc:#111111; --brass:#111111; --heldbg:#111111; --held-ink:#f6f1e6;
+  --font-title:system-ui, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-word:system-ui, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-legend:Consolas, Menlo, "DejaVu Sans Mono", monospace;
+  --font-label:Consolas, Menlo, "DejaVu Sans Mono", monospace;
+}
+.qtitle { font-weight:700; font-size:calc(23px * var(--s)); color:var(--ink); }
+.qtitle .dot { color:var(--sec); }
+.qaccess { font-size:calc(10px * var(--s)); color:var(--sec); }
+.drule { border-top-width:calc(3px * var(--s)); border-color:var(--line); opacity:1; }
+.key { border:2px solid var(--line); border-radius:calc(var(--u) * 0.06); background:transparent; }
+.key .lg { font-weight:700; font-size:calc(var(--u) * 0.32); }
+.key .word { font-weight:600; font-size:calc(var(--u) * 0.19); }
+.key .combo { font-weight:700; font-size:calc(var(--u) * 0.165); }
+.key .tag { font-weight:600; font-size:calc(var(--u) * 0.14); color:var(--sec); }
+.key .sub { font-size:calc(var(--u) * 0.13 * var(--subfit, 1)); font-weight:600; color:var(--sec); }
+.key.mod .lg, .key.mod .word, .key.mod .combo, .key.mod .tag { color:var(--sec); }
+/* the layer key: a double outline instead of a colour */
+.key.layerkey { border-width:2px; box-shadow:inset 0 0 0 2px var(--bg), inset 0 0 0 4px var(--acc); }
+.key.held { background:var(--heldbg); }
+.key.held .word, .key.held .lg, .key.held .sub { color:var(--held-ink); }
+.key.trns { opacity:1; border:2px dashed #857f74; box-shadow:none; }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:#857f74; }
+.key.dead { opacity:1; border:2px dotted #a39d91; box-shadow:none; }
+.mapping { font-size:calc(13px * var(--s)); font-weight:700; }
+.footer { font-size:calc(10px * var(--s)); color:var(--sec); }
+.footer .sep { color:var(--sec); }

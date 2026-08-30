@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Before you open an issue
+    url: https://github.com/whitehatnetizen/keymap-imgen/blob/main/CONTRIBUTING.md
+    about: What to send with a report, and the house rules for a change.

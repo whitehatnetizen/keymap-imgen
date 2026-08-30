@@ -1,0 +1,43 @@
+/* Paper dark: the same manual page after dark, parchment ink on near-black, brick-red accent. */
+@font-face { font-family:'Newsreader'; src:url('fonts/Newsreader-variable-normal.woff2') format('woff2'); font-weight:200 800; }
+@font-face { font-family:'Newsreader'; src:url('fonts/Newsreader-variable-italic.woff2') format('woff2'); font-weight:200 800; font-style:italic; }
+@font-face { font-family:'Libre Franklin'; src:url('fonts/LibreFranklin-variable-normal.woff2') format('woff2'); font-weight:100 900; }
+@font-face { font-family:'Fragment Mono'; src:url('fonts/FragmentMono-400-normal.woff2') format('woff2'); font-weight:400; }
+
+:root {
+  --night:#14100d; --night-deep:#0f0c09; --card:#1d1814; --ink:#e9e1d2; --sec:#a39682; --line:#4a3f33; --line-soft:#372e25;
+  --brick:#c25545; --brass:#b58a2e;
+  --bg:var(--night); --acc:var(--brick); --heldbg:var(--brick); --held-ink:#fbf3e6;
+  --font-title:'Newsreader', Georgia, serif;
+  --font-word:'Libre Franklin', system-ui, sans-serif;
+  --font-legend:'Newsreader', Georgia, serif;
+  --font-label:'Fragment Mono', monospace;
+}
+
+body { background:linear-gradient(180deg, var(--night) 0%, var(--night-deep) 100%); }
+.page::before { content:""; position:absolute; inset:calc(14px * var(--s)); border:1px solid var(--line); z-index:0; pointer-events:none; }
+.page::after { content:""; position:absolute; inset:calc(18px * var(--s)); border:0.5px solid var(--line-soft); z-index:0; pointer-events:none; }
+
+.qtitle { font-weight:500; font-size:calc(24px * var(--s)); letter-spacing:-0.005em; color:var(--ink); }
+.qtitle .no { font-family:'Fragment Mono', monospace; font-weight:400; font-size:calc(11px * var(--s)); letter-spacing:0.14em; text-transform:uppercase; color:var(--brass); vertical-align:middle; }
+.qtitle .dot { color:var(--line); }
+.qaccess { color:var(--sec); letter-spacing:0.14em; }
+.drule { height:calc(4px * var(--s)); border-top:1.5px solid var(--ink); border-bottom:0.5px solid var(--ink); margin-top:calc(7px * var(--s)); opacity:0.85; }
+
+.key { border-radius:calc(var(--u) * 0.05); border:1px solid var(--line); background:var(--card); box-shadow:0 1px 0 var(--line-soft); }
+.key .lg { font-weight:500; font-size:calc(var(--u) * 0.3); }
+.key .word { font-weight:500; font-size:calc(var(--u) * 0.15); letter-spacing:0.02em; }
+.key.mod .lg, .key.mod .word, .key.mod .combo, .key.mod .tag { color:var(--sec); }
+.key.layerkey { border-color:var(--brick); box-shadow:0 1px 0 var(--brick); }
+.key.layerkey .lg, .key.layerkey .word { color:var(--brick); }
+.key.held { background:var(--brick); border-color:#8e3a2e; box-shadow:0 1px 0 #8e3a2e; }
+.key.held .word, .key.held .lg, .key.held .sub { color:var(--held-ink); }
+.key.trns { opacity:1; background:transparent; border:1px dashed var(--line); box-shadow:none; }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:#6a5d4d; }
+.key.dead { opacity:1; background:transparent; border:1px dotted var(--line); box-shadow:none; }
+.key .sub { color:var(--sec); }
+.key.layerkey .sub { color:var(--brick); }
+
+.mapping { font-family:'Newsreader', Georgia, serif; font-style:italic; font-weight:400; font-size:calc(15px * var(--s)); letter-spacing:0.02em; text-transform:none; color:var(--ink); }
+.footer { color:var(--sec); }
+.footer .sep { color:var(--brass); }

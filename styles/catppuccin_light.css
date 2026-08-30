@@ -1,0 +1,42 @@
+/* Catppuccin light: the Latte flavour, the same soft rounded keys on a pale page. */
+@font-face { font-family:'Nunito'; src:url('fonts/Nunito-variable-normal.woff2') format('woff2'); font-weight:400 900; }
+@font-face { font-family:'JetBrains Mono'; src:url('fonts/JetBrainsMono-variable-normal.woff2') format('woff2'); font-weight:100 800; }
+
+:root {
+  --base:#eff1f5; --mantle:#e6e9ef; --crust:#dce0e8; --surface0:#ccd0da; --surface1:#bcc0cc; --overlay0:#9ca0b0;
+  --text:#4c4f69; --subtext0:#6c6f85; --mauve:#8839ef; --pink:#ea76cb; --blue:#1e66f5; --peach:#fe640b; --yellow:#df8e1d; --lavender:#7287fd; --teal:#179299;
+  --bg:var(--base); --card:#ffffff; --ink:var(--text); --sec:var(--subtext0); --line:var(--surface1);
+  --acc:var(--mauve); --brass:var(--peach); --heldbg:var(--mauve); --held-ink:#ffffff;
+  --font-title:'Nunito', system-ui, sans-serif;
+  --font-word:'Nunito', system-ui, sans-serif;
+  --font-legend:'JetBrains Mono', monospace;
+  --font-label:'JetBrains Mono', monospace;
+}
+
+body { background:linear-gradient(180deg, var(--base) 0%, var(--mantle) 100%); }
+
+.qtitle { font-weight:800; font-size:calc(22px * var(--s)); color:var(--text); }
+.qtitle .no { color:var(--peach); }
+.qtitle .dot { color:var(--overlay0); }
+.qaccess { font-weight:600; color:var(--subtext0); letter-spacing:0.12em; }
+.drule { height:calc(4px * var(--s)); border:0; border-radius:calc(2px * var(--s)); margin-top:calc(8px * var(--s)); opacity:1;
+  background:linear-gradient(90deg, var(--mauve), var(--pink) 50%, var(--peach)); }
+
+.key { border-radius:calc(var(--u) * 0.2); border:1px solid var(--line); background:var(--card); box-shadow:0 2px 0 var(--surface0); }
+.key .lg { font-weight:600; font-size:calc(var(--u) * 0.27); }
+.key .word { font-weight:800; font-size:calc(var(--u) * 0.155); }
+.key.mod { background:var(--mantle); }
+.key.mod .lg, .key.mod .word, .key.mod .combo, .key.mod .tag { color:var(--subtext0); }
+.key.layerkey { border-color:var(--mauve); }
+.key.layerkey .lg, .key.layerkey .word { color:var(--mauve); }
+.key.held { background:var(--mauve); border-color:var(--mauve); box-shadow:0 2px 0 #5f22b3; }
+.key.held .word, .key.held .lg, .key.held .sub { color:var(--held-ink); }
+.key.trns { opacity:1; background:transparent; border:1px dashed var(--surface1); box-shadow:none; }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:var(--overlay0); }
+.key.dead { opacity:1; background:transparent; border:1px dotted var(--surface1); box-shadow:none; }
+.key .sub { font-weight:700; color:var(--teal); }
+.key.layerkey .sub { color:var(--mauve); }
+
+.mapping { font-weight:800; color:var(--lavender); letter-spacing:0.2em; }
+.footer { font-weight:600; color:var(--subtext0); }
+.footer .sep { color:var(--peach); }

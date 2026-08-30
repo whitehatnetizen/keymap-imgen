@@ -1,0 +1,32 @@
+/* Plain: black on white for the printer. Thick outlines, large legends, no fills, no webfonts. */
+:root {
+  --bg:#ffffff; --card:#ffffff; --ink:#000000; --sec:#333333; --line:#000000;
+  --acc:#000000; --brass:#000000; --heldbg:#000000; --held-ink:#ffffff;
+  --font-title:system-ui, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-word:system-ui, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-legend:Consolas, Menlo, "DejaVu Sans Mono", monospace;
+  --font-label:Consolas, Menlo, "DejaVu Sans Mono", monospace;
+}
+.qtitle { font-weight:700; font-size:calc(23px * var(--s)); }
+.qtitle .dot { color:var(--sec); }
+.qaccess { font-size:calc(10px * var(--s)); color:var(--sec); }
+.drule { border-top-width:calc(3px * var(--s)); opacity:1; }
+/* keys: a 2px black outline and nothing else, so toner goes on the legends */
+.key { border:2px solid var(--line); border-radius:calc(var(--u) * 0.06); background:transparent; }
+.key .lg { font-weight:700; font-size:calc(var(--u) * 0.32); }
+.key .word { font-weight:600; font-size:calc(var(--u) * 0.19); }
+.key .combo { font-weight:700; font-size:calc(var(--u) * 0.165); }
+.key .tag { font-weight:600; font-size:calc(var(--u) * 0.14); color:var(--sec); }
+.key .sub { font-size:calc(var(--u) * 0.13 * var(--subfit, 1)); font-weight:600; color:var(--sec); }
+.key.mod .lg, .key.mod .word, .key.mod .combo, .key.mod .tag { color:var(--sec); }
+/* the layer key: a double outline instead of a colour */
+.key.layerkey { border-width:2px; box-shadow:inset 0 0 0 2px #ffffff, inset 0 0 0 4px #000000; }
+.key.held { background:#000000; }
+.key.held .word, .key.held .lg, .key.held .sub { color:#ffffff; }
+/* fall-through and unused keys: dashed and dotted grey outlines, legends in a grey that still prints */
+.key.trns { opacity:1; border:2px dashed #7a7a7a; box-shadow:none; }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:#7a7a7a; }
+.key.dead { opacity:1; border:2px dotted #9a9a9a; box-shadow:none; }
+.mapping { font-size:calc(13px * var(--s)); font-weight:700; }
+.footer { font-size:calc(10px * var(--s)); color:var(--sec); }
+.footer .sep { color:var(--sec); }

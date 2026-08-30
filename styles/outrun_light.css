@@ -1,0 +1,57 @@
+/* Outrun Daylight: the same register in print, pale ground, hard cyan offsets instead of glow, flat cut sun. */
+@font-face { font-family:'Orbitron'; src:url('fonts/Orbitron-variable.woff2') format('woff2'); font-weight:400 900; }
+@font-face { font-family:'Share Tech Mono'; src:url('fonts/ShareTechMono-400-normal.woff2') format('woff2'); font-weight:400; }
+
+:root {
+  --night:#f7f4fd; --night-deep:#ffffff; --dusk:#ebe4fa;
+  --magenta:#ff2a6d; --violet:#7a04eb; --cyan:#05d9e8; --sun:#fdca40; --ember:#ff6c11;
+  --magenta-text:#c8114f; --cyan-text:#087280; --sun-text:#8a6a00; --ember-text:#b8480a;
+  --rose:#7a0530; --held-deep:#c8114f; --held-ink:#ffffff;
+  --bg:var(--night); --card:#ffffff; --ink:#1b0838; --sec:#5e5290; --sec2:#6f63a0; --line:#b9c9d6; --edge:#8c82b8;
+  --acc:var(--magenta-text); --acc2:var(--cyan-text); --brass:var(--ember-text); --heldbg:var(--held-deep);
+  --font-title:'Orbitron', sans-serif;
+  --font-word:'Orbitron', sans-serif;
+  --font-legend:'Share Tech Mono', monospace;
+  --font-label:'Share Tech Mono', monospace;
+  --split:-1.5px 0 rgba(5,217,232,0.9), 1.5px 0 rgba(255,42,109,0.9);
+}
+
+body { background:linear-gradient(180deg, var(--night-deep) 0%, var(--night) 60%, var(--dusk) 100%); }
+/* plotter lines instead of a glowing grid */
+.page::before { content:""; position:absolute; left:-40%; right:-40%; bottom:-6px; height:calc(520px * var(--s)); z-index:0;
+  background-image:
+    linear-gradient(rgba(200,17,79,0.45) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(200,17,79,0.45) 2px, transparent 2px);
+  background-size:calc(96px * var(--s)) calc(96px * var(--s)); background-position:center bottom;
+  transform:perspective(calc(420px * var(--s))) rotateX(64deg); transform-origin:50% 100%;
+  -webkit-mask-image:linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.85) 45%, #000 100%);
+          mask-image:linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.85) 45%, #000 100%); }
+/* a flat cut sun, bottom right, instead of the radial glow; no scanlines */
+.page::after { content:""; position:absolute; right:6%; bottom:0; width:calc(260px * var(--s)); height:calc(110px * var(--s)); z-index:1; pointer-events:none;
+  background:radial-gradient(circle at 50% 100%, var(--sun) 0 54%, var(--ember) 54% 60%, transparent 60.5%);
+  -webkit-mask-image:repeating-linear-gradient(180deg, #000 0 11px, transparent 11px 15px);
+          mask-image:repeating-linear-gradient(180deg, #000 0 11px, transparent 11px 15px); }
+
+.qtitle { font-weight:800; font-size:calc(19px * var(--s)); letter-spacing:0.08em; text-transform:uppercase; color:var(--ink); text-shadow:var(--split); }
+.qtitle .no { color:var(--ember-text); text-shadow:none; }
+.qtitle .dot { color:var(--sec2); text-shadow:none; }
+.qaccess { font-size:calc(10px * var(--s)); letter-spacing:0.22em; color:var(--sec2); }
+.drule { height:2px; border:0; margin-top:calc(8px * var(--s)); opacity:1;
+  background:linear-gradient(90deg, var(--magenta) 0%, var(--violet) 45%, var(--cyan) 100%); }
+
+/* a violet-grey edge and a one-pixel hard offset: white keys on the pale ground need both to read */
+.key { border-radius:3px; border:1px solid var(--edge); background:var(--card); box-shadow:1px 1px 0 rgba(27,8,56,0.22); }
+.key .lg { font-size:calc(var(--u) * 0.285); }
+.key .word { font-weight:600; font-size:calc(var(--u) * 0.143); letter-spacing:0.04em; }
+.key .combo { font-family:'Share Tech Mono', monospace; font-weight:400; font-size:calc(var(--u) * 0.16); }
+.key .tag { font-family:'Share Tech Mono', monospace; font-weight:400; font-size:calc(var(--u) * 0.134); line-height:1.2; }
+.key.layerkey { border-color:var(--magenta-text); box-shadow:2px 2px 0 var(--cyan); }
+.key.held { background:var(--held-deep); border-color:var(--rose); box-shadow:3px 3px 0 var(--cyan); }
+.key.held .word, .key.held .lg, .key.held .sub { color:var(--held-ink); }
+.key.dead { opacity:1; background:rgba(122,4,235,0.03); border-color:rgba(140,130,184,0.7); box-shadow:none; }
+.key.trns { opacity:1; background:rgba(122,4,235,0.04); border-color:rgba(140,130,184,0.7); box-shadow:none; }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { opacity:0.45; }
+
+.mapping { font-weight:900; font-size:calc(13px * var(--s)); letter-spacing:0.3em; color:var(--ink); text-shadow:var(--split); }
+.footer { font-size:calc(9.5px * var(--s)); letter-spacing:0.2em; color:var(--sec2); }
+.footer .sep { color:var(--cyan-text); }

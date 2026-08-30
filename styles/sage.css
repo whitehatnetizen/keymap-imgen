@@ -1,0 +1,30 @@
+/* Sage: the printer card with its outlines and titles in a dusty green on white; no fills, no webfonts. */
+:root {
+  --bg:#ffffff; --card:transparent; --ink:#111111; --sec:#44514a; --line:#4f7a63;
+  --acc:#3f6650; --brass:#3f6650; --heldbg:#3f6650; --held-ink:#ffffff;
+  --font-title:system-ui, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-word:system-ui, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-legend:Consolas, Menlo, "DejaVu Sans Mono", monospace;
+  --font-label:Consolas, Menlo, "DejaVu Sans Mono", monospace;
+}
+.qtitle { font-weight:700; font-size:calc(23px * var(--s)); color:var(--acc); }
+.qtitle .dot { color:var(--sec); }
+.qaccess { font-size:calc(10px * var(--s)); color:var(--sec); }
+.drule { border-top-width:calc(3px * var(--s)); border-color:var(--line); opacity:1; }
+.key { border:2px solid var(--line); border-radius:calc(var(--u) * 0.06); background:transparent; }
+.key .lg { font-weight:700; font-size:calc(var(--u) * 0.32); }
+.key .word { font-weight:600; font-size:calc(var(--u) * 0.19); }
+.key .combo { font-weight:700; font-size:calc(var(--u) * 0.165); }
+.key .tag { font-weight:600; font-size:calc(var(--u) * 0.14); color:var(--sec); }
+.key .sub { font-size:calc(var(--u) * 0.13 * var(--subfit, 1)); font-weight:600; color:var(--sec); }
+.key.mod .lg, .key.mod .word, .key.mod .combo, .key.mod .tag { color:var(--sec); }
+/* the layer key: a double outline instead of a colour */
+.key.layerkey { border-width:2px; box-shadow:inset 0 0 0 2px var(--bg), inset 0 0 0 4px var(--acc); }
+.key.held { background:var(--heldbg); }
+.key.held .word, .key.held .lg, .key.held .sub { color:var(--held-ink); }
+.key.trns { opacity:1; border:2px dashed #8fa59a; box-shadow:none; }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:#8fa59a; }
+.key.dead { opacity:1; border:2px dotted #b2c4ba; box-shadow:none; }
+.mapping { font-size:calc(13px * var(--s)); font-weight:700; }
+.footer { font-size:calc(10px * var(--s)); color:var(--sec); }
+.footer .sep { color:var(--sec); }

@@ -1,0 +1,51 @@
+/* Retro: grey Cherry-profile keycaps with a lit top face, on a dark desk mat, orange accent. */
+@font-face { font-family:'Hanken Grotesk'; src:url('fonts/HankenGrotesk-variable-normal.woff2') format('woff2'); font-weight:100 900; }
+@font-face { font-family:'IBM Plex Mono'; src:url('fonts/IBMPlexMono-500-normal.woff2') format('woff2'); font-weight:500; }
+
+:root {
+  --mat:#1f2022; --mat-deep:#17181a;
+  --cap:#4b4e53; --cap-top:#585b61; --cap-side:#35373b; --modcap:#303236; --modcap-top:#3c3e43; --modcap-side:#232427;
+  --legend:#eae7de; --legend-dim:#b9b5aa; --orange:#d8682e; --orange-deep:#a84c1e;
+  --bg:var(--mat); --card:var(--cap); --ink:var(--legend); --sec:var(--legend-dim); --line:var(--cap-side);
+  --acc:var(--orange); --brass:var(--orange); --heldbg:var(--orange); --held-ink:#1a1006;
+  --font-title:'Hanken Grotesk', system-ui, sans-serif;
+  --font-word:'Hanken Grotesk', system-ui, sans-serif;
+  --font-legend:'Hanken Grotesk', system-ui, sans-serif;
+  --font-label:'IBM Plex Mono', monospace;
+}
+
+body { background:
+  radial-gradient(ellipse 80% 60% at 50% 40%, rgba(255,255,255,0.04) 0%, transparent 70%),
+  linear-gradient(180deg, var(--mat) 0%, var(--mat-deep) 100%); }
+
+.qtitle { font-weight:700; font-size:calc(20px * var(--s)); letter-spacing:0.01em; color:var(--legend); }
+.qtitle .no { font-family:'IBM Plex Mono', monospace; font-weight:500; font-size:calc(11px * var(--s)); letter-spacing:0.14em; text-transform:uppercase; color:var(--orange); vertical-align:middle; }
+.qtitle .dot { color:#55585d; }
+.qaccess { color:var(--legend-dim); letter-spacing:0.14em; }
+.drule { height:0; border:0; border-top:2px solid #55585d; margin-top:calc(8px * var(--s)); opacity:1; }
+
+/* the cap: a dark skirt with a lighter top face drawn inset */
+.key { border-radius:calc(var(--u) * 0.1); border:0; background:var(--cap); overflow:visible;
+  box-shadow:inset 0 calc(var(--u) * -0.06) 0 var(--cap-side), inset 0 1px 0 rgba(255,255,255,0.12), 0 calc(var(--u) * 0.04) calc(var(--u) * 0.06) rgba(0,0,0,0.6); }
+.key::before { content:""; position:absolute; left:11%; right:11%; top:9%; bottom:20%; border-radius:calc(var(--u) * 0.06);
+  background:var(--cap-top); box-shadow:inset 0 1px 0 rgba(255,255,255,0.08); z-index:0; }
+.key > span { position:relative; z-index:1; }
+.key .lg { font-weight:600; font-size:calc(var(--u) * 0.27); }
+.key .word { font-weight:600; font-size:calc(var(--u) * 0.15); letter-spacing:0.02em; }
+.key .sub { bottom:calc(var(--u) * 0.06); }
+.key.mod { background:var(--modcap); box-shadow:inset 0 calc(var(--u) * -0.06) 0 var(--modcap-side), inset 0 1px 0 rgba(255,255,255,0.08), 0 calc(var(--u) * 0.04) calc(var(--u) * 0.06) rgba(0,0,0,0.6); }
+.key.mod::before { background:var(--modcap-top); }
+.key.mod .lg, .key.mod .word, .key.mod .combo, .key.mod .tag { color:var(--legend-dim); }
+.key.layerkey .lg, .key.layerkey .word { color:var(--orange); }
+.key.layerkey .sub { color:var(--orange); }
+.key.held { background:var(--orange); box-shadow:inset 0 calc(var(--u) * -0.06) 0 var(--orange-deep), inset 0 1px 0 rgba(255,255,255,0.25), 0 calc(var(--u) * 0.02) calc(var(--u) * 0.04) rgba(0,0,0,0.6); }
+.key.held::before { background:#e5763c; }
+.key.held .word, .key.held .lg, .key.held .sub { color:var(--held-ink); }
+.key.trns, .key.dead { opacity:1; background:transparent; box-shadow:none; border:1px dashed #3a3c40; }
+.key.trns::before, .key.dead::before { display:none; }
+.key.dead { border-style:dotted; }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:#5c5f65; }
+
+.mapping { font-weight:700; color:var(--legend); letter-spacing:0.22em; }
+.footer { color:var(--legend-dim); }
+.footer .sep { color:var(--orange); }
