@@ -168,7 +168,13 @@
   var boardsPromise = null;
   function loadBoards() {
     if (!boardsPromise) {
-      boardsPromise = loadScript("docs/boards.js").then(function () { return window.BOARDS || []; });
+      // ZMK boards ride along in docs/zmk-boards.js (records flagged z: 1); the file is
+      // optional, so a copy without the ZMK index still searches QMK's list
+      boardsPromise = loadScript("docs/boards.js").then(function () {
+        return loadScript("docs/zmk-boards.js").catch(function () {}).then(function () {
+          return (window.BOARDS || []).concat(window.ZMKBOARDS || []);
+        });
+      });
       boardsPromise.catch(function () { boardsPromise = null; });
     }
     return boardsPromise;
@@ -201,13 +207,13 @@
   }
   // The renderer's reader does the parsing; its messages are mapped to the page's sentences.
   function parseFile(name, text) {
-    var how = M("js.file.how", "Export one from Vial (File → Save current layout) or from QMK Configurator (Export keymap) and try again.");
+    var how = M("js.file.how", "Export one from Vial (File → Save current layout) or from QMK Configurator (Export keymap), or take the .keymap file from a ZMK config, and try again.");
     var km;
     try { km = vilimg.parseKeymap(text, name); }
     catch (e) {
       var msg = e.message || "";
       if (msg.indexOf("not valid JSON") >= 0) return M("js.file.notkeymap", "Could not read {name}: it is not a keymap file. {how}", { name: name, how: how });
-      if (msg.indexOf("neither a Vial") >= 0) return M("js.file.notvil", "Could not read {name}: it is not a Vial .vil or a QMK keymap.json. {how}", { name: name, how: how });
+      if (msg.indexOf("neither a Vial") >= 0) return M("js.file.notvil", "Could not read {name}: it is not a Vial .vil, a QMK keymap.json or a ZMK .keymap. {how}", { name: name, how: how });
       return M("js.file.bad", "Could not read {msg}. {how}", { msg: msg, how: how });
     }
     resetFile();
@@ -226,7 +232,8 @@
     var km = state.km, shape = vilimg.keymapShape(km);
     var nonempty = state.layers.filter(function (l) { return l.keys; }).length;
     var layersText = tn("js.layers", nonempty, "{n} layer", "{n} layers");
-    var keys = km.kind === "vil" ? vilimg.positions(km).length : 0;
+    var keys = km.kind === "vil" ? vilimg.positions(km).length
+             : km.positional && km.positional[0] ? km.positional[0].length : 0;
     var keysText = tn("js.keys", keys, "{n} key", "{n} keys");
     // Two lines, each starting with the noun it describes: the keymap (what was read) and the
     // layout (which drawing of the keyboard the picture uses, chosen under Keyboard). The block is
@@ -239,6 +246,9 @@
       html = t("js.status.vil", "Keymap: {name}: a Vial keymap with {keys} and {layers} <span class=\"d\">({rows} x {cols} matrix{uid})</span>.",
         { name: fname, keys: keysText, layers: layersText, rows: shape[0], cols: shape[1],
           uid: km.uid ? t("js.status.uid", ", uid {uid}", { uid: esc(km.uid) }) : "" });
+    } else if (km.kind === "zmk") {
+      html = t("js.status.zmk", "Keymap: {name}: a ZMK keymap with {keys} and {layers}.",
+        { name: fname, keys: keysText, layers: layersText });
     } else {
       html = t("js.status.qmk", "Keymap: {name}: a QMK keymap for {board}{layout}, {layers}.",
         { name: fname, board: esc(km.keyboard), layers: layersText,
@@ -287,6 +297,25 @@
     indexPromise.catch(function () { indexPromise = null; });   // try again next time
     return indexPromise;
   }
+  // The ZMK index, the same way (boards/zmk-index.json.gz, built by tools/build_zmk_index.py).
+  var zmkIndexPromise = null;
+  function loadZmkIndex() {
+    if (zmkIndexPromise) return zmkIndexPromise;
+    zmkIndexPromise = fetch("boards/zmk-index.json.gz").then(function (r) {
+      if (!r.ok) throw new Error(t("js.index.http", "the server answered {status}", { status: r.status }));
+      return r.arrayBuffer();
+    }).then(function (buf) {
+      var bytes = new Uint8Array(buf);
+      if (bytes.length > 2 && bytes[0] === 0x1f && bytes[1] === 0x8b) {
+        if (typeof DecompressionStream === "undefined") throw new Error(t("js.index.nodecompress", "this browser cannot decompress the board list"));
+        var ds = new DecompressionStream("gzip");
+        return new Response(new Blob([bytes]).stream().pipeThrough(ds)).text();
+      }
+      return new TextDecoder().decode(bytes);
+    }).then(function (text) { return vilimg.resolveIndex(JSON.parse(text)); });
+    zmkIndexPromise.catch(function () { zmkIndexPromise = null; });
+    return zmkIndexPromise;
+  }
   // The {k, n, l} record docs/boards.js has for a board, built from the index itself, so a
   // shape match needs no boards.js.
   function indexRecord(idx, name) {
@@ -321,6 +350,26 @@
         var b = boards.filter(function (x) { return x.k === km.keyboard; })[0], note2;
         if (b) { selectBoard(b, km.layout_name && b.l[km.layout_name] ? km.layout_name : null); note2 = M("js.board.named", "{board}: named in the file.", { board: boardLabel() }); }
         else { note2 = M("js.board.notlisted", "The file names {name}, which is not in the list; pick it below or choose the plain grid.", { name: km.keyboard }); }
+        state.pickerOpen = !state.board;
+        setBoardNote(note2); update(true);
+      }, indexFailed(file));
+      return;
+    } else if (km.kind === "zmk") {
+      // a ZMK keymap names no keyboard; when exactly one ZMK layout in the list has its key
+      // count, that one is chosen (with a note), else the user picks
+      setBoardNote(M("js.board.loading", "Loading the board list..."));
+      loadBoards().then(function (boards) {
+        if (state.file !== file) return;
+        var n = km.positional && km.positional[0] ? km.positional[0].length : 0, note2;
+        var hits = boards.filter(function (x) {
+          return x.z && Object.keys(x.l).some(function (ln) { return x.l[ln] === n; });
+        });
+        if (hits.length === 1) {
+          selectBoard(hits[0], null);
+          note2 = M("js.board.zmkcount", "{board}: the only ZMK layout in the list with {n} keys. Search below if it is not yours.", { board: boardLabel(), n: n });
+        } else {
+          note2 = M("js.board.zmknone", "A ZMK keymap names no keyboard. Search for yours, use its ZMK layouts .dtsi file (the button below), or choose the plain grid.");
+        }
         state.pickerOpen = !state.board;
         setBoardNote(note2); update(true);
       }, indexFailed(file));
@@ -381,7 +430,7 @@
     term = (term || "").toLowerCase().trim();
     var hits = [], boards = window.BOARDS || null;
     HAND.forEach(function (h) { var r = term ? matchRank(h.k, h.n, term) : 0; if (r >= 0) hits.push({ hand: h, rank: r }); });
-    if (term && boards) boards.forEach(function (b) { var r = matchRank(b.k, b.n, term); if (r >= 0) hits.push({ qmk: b, rank: r }); });
+    if (term && boards) boards.concat(window.ZMKBOARDS || []).forEach(function (b) { var r = matchRank(b.k, b.n, term); if (r >= 0) hits.push({ qmk: b, rank: r }); });
     if (term && !boards) {
       // the QMK list is still to come: show the user-added boards now, the rest when it lands
       loadBoards().then(function () { if (($("search").value || "").toLowerCase().trim() === term) renderResults(term); }, function () {});
@@ -427,17 +476,46 @@
     renderResults($("search").value); update(true);
   }
   function selectHand(h) { state.board = { k: h.k, n: h.n, hand: true, rec: h }; state.layout = null; $("layoutrow").className = "row hidden"; renderResults($("search").value); update(true); }
+  function selectDtsi(fileName, board) {
+    state.board = { k: fileName, n: board.name, dtsi: true, rec: board }; state.layout = null;
+    $("layoutrow").className = "row hidden"; renderResults($("search").value); update(true);
+  }
+  $("dtsifile").addEventListener("change", function () {
+    var f = this.files[0];
+    if (!f) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var layouts = vilimg.zmkLayouts(String(reader.result), f.name);
+        var count = state.km && state.km.positional && state.km.positional[0] ? state.km.positional[0].length : 0;
+        var chosen = null;
+        layouts.forEach(function (l) { if (!chosen && count && l.keys.length === count) chosen = l; });
+        chosen = chosen || layouts[0];
+        var board = vilimg.boardFromZmkLayout(chosen, f.name.replace(/\.(dtsi|overlay|dts)$/i, ""),
+                                              "ZMK physical layout (" + f.name + ")");
+        selectDtsi(f.name, board);
+        state.pickerOpen = false;
+        setBoardNote(M("js.board.dtsi", "{board}: from the ZMK layouts file{which}.",
+          { board: boardLabel(), which: layouts.length > 1 ? M("js.board.dtsiwhich", " ({name} of its {n} layouts, matched by key count)", { name: chosen.name, n: layouts.length }) : "" }));
+        update(true);
+      } catch (e) {
+        setBoardNote(M("js.board.dtsibad", "Could not read {name}: {msg}", { name: f.name, msg: e.message }));
+      }
+    };
+    reader.readAsText(f);
+  });
 
   function selectBoard(b, layout) {
     var names = Object.keys(b.l);
     if (!layout) {
       // prefer the layout whose key count matches the file, else the largest
-      var want = state.km && state.km.kind === "vil" ? vilimg.positions(state.km).length : null;
+      var want = state.km && state.km.kind === "vil" ? vilimg.positions(state.km).length
+               : state.km && state.km.positional && state.km.positional[0] ? state.km.positional[0].length : null;
       layout = names[0];
       names.forEach(function (ln) { if (b.l[ln] > b.l[layout]) layout = ln; });
       if (want) names.forEach(function (ln) { if (b.l[ln] === want) layout = ln; });
     }
-    state.board = { k: b.k, n: b.n, l: b.l }; state.layout = layout;
+    state.board = { k: b.k, n: b.n, l: b.l, z: b.z }; state.layout = layout;
     var row = $("layoutrow"), span = $("layouts"); span.innerHTML = "";
     if (names.length > 1) {
       names.forEach(function (ln) {
@@ -669,16 +747,18 @@
     if (geomCache[key]) return Promise.resolve(geomCache[key]);
     var p;
     if (b.k === "grid") p = Promise.resolve(km.layers.length ? vilimg.gridBoard(km, gridMode()) : vilimg.positionalGrid(km));
-    else if (b.usb) p = Promise.resolve(vilimg.normBoard(b.rec));
+    else if (b.usb || b.dtsi) p = Promise.resolve(vilimg.normBoard(b.rec));
     else if (b.hand) {
       var h = b.rec;
       p = Promise.resolve(vilimg.normBoard({ name: h.n, slug: h.k, matrix: [h.r, h.c], uids: h.u, keys: h.keys || [],
         source: "boards/" + h.k + ".json" }));
     } else {
-      p = loadIndex().then(function (idx) {
+      p = (b.z ? loadZmkIndex() : loadIndex()).then(function (idx) {
         var rec = idx.boards[b.k];
         if (!rec) throw new Error(t("js.index.notlisted", "{board} is not in the board list", { board: b.k }));
-        return vilimg.boardFromIndex(b.k, rec, layout);
+        var geom = vilimg.boardFromIndex(b.k, rec, layout);
+        if (b.z) geom.zmk_order = true;   // a ZMK layout's keys are already in the keymap's order
+        return geom;
       });
     }
     return p.then(function (geom) { geomCache[key] = geom; return geom; });
@@ -690,9 +770,9 @@
     var notes = [];
     if (state.board && state.board.k === "grid") notes.push("matrix grid: real shape unknown");
     var halves = $("halves").checked && state.geom && vilimg.isSplit(state.geom);
-    return { layers: sel.length ? sel : all, names: names, title: state.file.replace(/\.(vil|json)$/i, ""),
+    return { layers: sel.length ? sel : all, names: names, title: state.file.replace(/\.(vil|json|keymap)$/i, ""),
              date: new Date().toISOString().slice(0, 10), styleName: styleName, note: notes.join("; "),
-             dual: $("dual").checked, halves: halves, labels: {} };
+             dual: $("dual").checked, halves: halves, labels: {}, combos: $("combos").value };
   }
   var liveSeq = 0;
   function livePreview(styleName) {
@@ -782,7 +862,7 @@
     var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
     setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
   }
-  function outputStem() { return state.file.replace(/\.(vil|json)$/i, "") + "." + (state.customStyle || state.style); }
+  function outputStem() { return state.file.replace(/\.(vil|json|keymap)$/i, "") + "." + (state.customStyle || state.style); }
   function sheetSize() {
     var dual = /<body class="dual"/.test(state.sheets[0]);
     return { width: dual ? 3840 : 1920, height: 1080 };
@@ -923,17 +1003,19 @@
     if (!$("png").checked) parts.push("--no-png");
     if ($("halves").checked) parts.push("--split-halves");
     else if ($("dual").checked) parts.push("--dual-monitor");
+    if ($("combos").value !== "badges") parts.push("--combos", $("combos").value);
     return parts.join(" ");
   }
   function settings() {
     var s = {};
-    if (state.file) s.title = state.file.replace(/\.(vil|json)$/i, "");
+    if (state.file) s.title = state.file.replace(/\.(vil|json|keymap)$/i, "");
     if (state.board && !state.board.usb) s.board = state.board.k;   // "grid" included: the command accepts it
     if (state.layout) s.layout = state.layout;
     var sel = state.layers.filter(function (l) { return l.keys && state.chosen[l.i]; }).map(function (l) { return l.i; });
     if (sel.length) s.layers = sel;
     var names = {}; Object.keys(state.names).forEach(function (k) { names[k] = state.names[k]; });
     if (Object.keys(names).length) s.names = names;
+    if ($("combos").value !== "badges") s.combos = $("combos").value;
     s.labels = {};
     return s;
   }
@@ -949,6 +1031,9 @@
     $("size2").textContent = dual ? t("js.size2.dual", "7680 x 2160, two 4K screens") : t("js.size2", "3840 x 2160, 4K");
     $("dlleft").style.display = dual && !IS_SAFARI ? "" : "none";
     $("dlright").style.display = dual && !IS_SAFARI ? "" : "none";
+    var noCmb = !!state.km && !vilimg.comboEntries(state.km).length;
+    $("combos").disabled = noCmb;
+    $("combosnote").className = "note" + (noCmb ? "" : " hidden");
     $("cmd").textContent = command();
     $("namesnote").className = "note" + (state.commaName ? "" : " hidden");
     $("usbcmdnote").className = "note" + (state.board && state.board.usb ? "" : " hidden");
@@ -961,6 +1046,7 @@
   function applySettings(side) {
     if (Array.isArray(side.layers)) state.layers.forEach(function (l) { state.chosen[l.i] = l.keys > 0 && side.layers.indexOf(l.i) >= 0; });
     if (side.names && typeof side.names === "object") Object.keys(side.names).forEach(function (i) { if (side.names[i]) state.names[i] = String(side.names[i]); });
+    if (["badges", "lines", "panel", "text", "off"].indexOf(side.combos) >= 0) $("combos").value = side.combos;
   }
   function handleText(name, text, usbBoard, side) {
     var err = parseFile(name, text);
@@ -1109,7 +1195,7 @@
   $("file").addEventListener("change", function () { if (this.files[0]) takeFile(this.files[0]); });
   // The two sample links sit inside one translated sentence, whose elements are replaced on a
   // language switch, so the click is taken on the sentence and matched to the link's data-sample.
-  var SAMPLES = { dz60: "dz60-qwerty.json", corne: "corne-qwerty.vil" };
+  var SAMPLES = { dz60: "dz60-qwerty.json", corne: "corne-qwerty.vil", zmkcorne: "corne-zmk.keymap" };
   $("samplelinks").addEventListener("click", function (e) {
     var a = e.target.closest("a[data-sample]");
     if (!a) return;
@@ -1122,6 +1208,18 @@
     var side = {};
     try { side = JSON.parse($("samplesettings-" + key).textContent); } catch (err) {}
     handleText(name, text, null, side);
+    if (side.board && state.km && !state.board) {
+      // the settings file names the board (the ZMK sample: its keymap cannot); pick it once the list is in
+      loadBoards().then(function (boards) {
+        var b = boards.filter(function (x) { return x.k === side.board; })[0];
+        if (b && state.file === name && !state.board) {
+          selectBoard(b, side.layout || null);
+          state.pickerOpen = false;
+          setBoardNote(M("js.board.sample", "{board}: chosen by the sample's settings file.", { board: boardLabel() }));
+          update(true);
+        }
+      }, function () {});
+    }
   });
   var drop = $("drop");
   // the whole box opens the picker; the label and the control itself already do, so a click there is left alone
@@ -1139,6 +1237,7 @@
   $("png").addEventListener("change", function () { remember("png", this.checked ? "1" : "0"); update(); });
   $("dual").addEventListener("change", function () { remember("dual", this.checked ? "1" : "0"); update(true); if (!LIVE) showChosen(); });
   $("halves").addEventListener("change", function () { remember("halves", this.checked ? "1" : "0"); update(true); if (!LIVE) showChosen(); });
+  $("combos").addEventListener("change", function () { remember("combos", this.value); update(true); if (!LIVE) showChosen(); });
   function usbCommand() {
     var name = ($("usbname").value || "").trim().toLowerCase().replace(/\.json$/, "").replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "") || "mykeyboard";
     var py = state.os === "win" ? "python" : "python3";
@@ -1177,7 +1276,7 @@
   $("save").onclick = function () {
     $("savenote").className = "note";
     if (!state.file) { $("savenote").textContent = t("js.nokeymap", "Choose a keymap first."); return; }
-    var name = state.file.replace(/\.(vil|json)$/i, "") + ".settings.json";
+    var name = state.file.replace(/\.(vil|json|keymap)$/i, "") + ".settings.json";
     $("savenote").innerHTML = t("js.save.done", "Saved <code>{name}</code> where your browser puts downloads. Move it into <code>keymaps/</code> next to your keymap; from then on <code>python keymap-imgen.py</code> remembers these choices.", { name: esc(name) });
     download(name, new Blob([JSON.stringify(settings(), null, 2)], { type: "application/json" }));
   };
@@ -1190,6 +1289,8 @@
     if (os === "win" || os === "nix") state.os = os;
     if (recall("png") === "0") $("png").checked = false;
     if (recall("dual") === "1") { $("dual").checked = true; if (recall("halves") === "1") $("halves").checked = true; }
+    var cmb = recall("combos");
+    if (cmb && ["badges", "lines", "panel", "text", "off"].indexOf(cmb) >= 0) $("combos").value = cmb;
     if (recall("scale") === "1") { $("scale1").checked = true; $("scale2").checked = false; }
   })();
   setDownloads(false);

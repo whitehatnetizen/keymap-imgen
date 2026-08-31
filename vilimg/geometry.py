@@ -30,9 +30,14 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from . import zmk as zmkmod
+
 BOARDS_DIR = Path(__file__).resolve().parent.parent / "boards"
 INDEX_GZ = BOARDS_DIR / "qmk-index.json.gz"
 INDEX_META = BOARDS_DIR / "qmk-index.meta.json"
+ZMK_INDEX_GZ = BOARDS_DIR / "zmk-index.json.gz"
+ZMK_INDEX_META = BOARDS_DIR / "zmk-index.meta.json"
+DTSI_SUFFIXES = (".dtsi", ".overlay", ".dts")
 
 
 @dataclass
@@ -63,6 +68,7 @@ class Board:
     note: str = ""
     layout: str = ""          # layout name when the board came from the QMK index
     source: str = ""          # where the geometry came from, for the footer
+    zmk_order: bool = False   # keys are in a ZMK layout's own order: a ZMK keymap counts them as they are
 
     @property
     def positions(self):
@@ -72,7 +78,7 @@ class Board:
         """The board as plain data for the JavaScript renderer (docs/vilimg.js)."""
         return {"name": self.name, "slug": self.slug, "layout": self.layout, "source": self.source,
                 "note": self.note, "matrix": list(self.matrix), "uids": [str(u) for u in self.uids],
-                "keys": [k.to_dict() for k in self.keys]}
+                "keys": [k.to_dict() for k in self.keys], "zmk_order": self.zmk_order}
 
 
 @dataclass
@@ -115,9 +121,46 @@ def _board_from_renderer(data):
                  note=data.get("note", ""), layout=data.get("layout", ""), source=data.get("source", ""))
 
 
+def board_from_layouts_file(path, layout=None, prefer_count=None):
+    """A Board from a devicetree file holding zmk,physical-layout nodes (a ZMK board's
+    -layouts.dtsi). With several layouts in one file, `layout` picks by display name;
+    else the one whose key count matches `prefer_count`, else the first."""
+    path = Path(path)
+    try:
+        text = path.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        raise ValueError(f"board file {path.name}: not a text file") from None
+    layouts = zmkmod.parse_layouts(text, path.name)
+    chosen = None
+    if layout:
+        chosen = next((l for l in layouts if l["name"] == layout), None)
+        if chosen is None:
+            raise LookupError(f"{path.name} has no layout {layout!r}; it has: "
+                              + ", ".join(l["name"] for l in layouts))
+    elif prefer_count:
+        chosen = next((l for l in layouts if len(l["keys"]) == prefer_count), None)
+    if chosen is None:
+        chosen = layouts[0]
+    pairs = zmkmod.matrix_from_geometry(chosen["keys"])
+    keys = []
+    for k, (r, c) in zip(chosen["keys"], pairs):
+        key = Key(matrix=(r, c), x=k["x"], y=k["y"], w=k.get("w", 1.0), h=k.get("h", 1.0),
+                  r=k.get("r", 0.0))
+        if key.r:
+            key.rx = k.get("rx", key.x + key.w / 2)
+            key.ry = k.get("ry", key.y + key.h / 2)
+        keys.append(key)
+    rows = max((k.matrix[0] for k in keys), default=-1) + 1
+    cols = max((k.matrix[1] for k in keys), default=-1) + 1
+    return Board(name=chosen["name"] or path.stem, slug=path.stem, matrix=(rows, cols), uids=[],
+                 keys=keys, layout=chosen["name"], source=f"ZMK physical layout ({path.name})",
+                 zmk_order=True)
+
+
 def list_boards():
     """Slugs of the hand-written / saved board files."""
-    return sorted(p.stem for p in BOARDS_DIR.glob("*.json") if not p.name.startswith("qmk-index"))
+    return sorted(p.stem for p in BOARDS_DIR.glob("*.json")
+                  if not p.name.startswith(("qmk-index", "zmk-index")))
 
 
 _board_cache = {}      # path -> (mtime, size, Board): a run with many keymaps parses each file once
@@ -136,12 +179,14 @@ def all_boards():
     return out
 
 
-def load_board_file(slug_or_path):
+def load_board_file(slug_or_path, layout=None, prefer_count=None):
     p = Path(slug_or_path)
     if not p.is_file():
         p = BOARDS_DIR / f"{slug_or_path}.json"
     if not p.is_file():
         raise FileNotFoundError(f"no board file named {slug_or_path!r}")
+    if p.suffix.lower() in DTSI_SUFFIXES:
+        return board_from_layouts_file(p, layout, prefer_count)
     try:
         data = json.loads(p.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, UnicodeDecodeError) as e:
@@ -357,15 +402,101 @@ def board_from_index(name, layout=None, prefer_positions=None):
                  layout=chosen, source="QMK keyboard data")
 
 
-def load_board(name, layout=None, prefer_positions=None):
-    """A board by hand-file slug or path, else by QMK index name."""
+def load_board(name, layout=None, prefer_positions=None, prefer_count=None):
+    """A board by hand-file slug or path (a ZMK layouts .dtsi included), else by ZMK index
+    name, else by QMK index name."""
     p = Path(name)
     if p.is_file() or (BOARDS_DIR / f"{name}.json").is_file():
-        return load_board_file(name)
+        return load_board_file(name, layout, prefer_count)
+    if str(name) in load_zmk_index().get("boards", {}):
+        return zmk_board_from_index(name, layout, prefer_count)
     if load_index():
         return board_from_index(name, layout, prefer_positions)
     raise LookupError(f"no board named {name!r}; bundled board files: {', '.join(list_boards())} "
                       f"(the QMK index is not present, so QMK names cannot be used)")
+
+
+# ---- the ZMK index -----------------------------------------------------------------------
+# The same structure as the QMK index (shapes shared, compact key rows), generated by
+# tools/build_zmk_index.py from zmk,physical-layout nodes in the ZMK repository and a list
+# of vendor module repositories. See boards/ZMK-DATA-NOTICE.md.
+
+_zmk_index_cache = None
+
+
+def load_zmk_index():
+    """The ZMK index as a dict, or {} when the file is absent."""
+    global _zmk_index_cache
+    if _zmk_index_cache is None:
+        if ZMK_INDEX_GZ.exists():
+            with gzip.open(ZMK_INDEX_GZ, "rt", encoding="utf-8") as f:
+                _zmk_index_cache = _resolve_shapes(json.load(f))
+        else:
+            _zmk_index_cache = {}
+    return _zmk_index_cache
+
+
+def zmk_index_meta():
+    if ZMK_INDEX_META.exists():
+        return json.loads(ZMK_INDEX_META.read_text(encoding="utf-8"))
+    idx = load_zmk_index()
+    return {k: idx[k] for k in ("built", "count", "source") if k in idx}
+
+
+def search_zmk_index(term=""):
+    """[(name, display name, {layout: key count})] from the ZMK index, as search_index."""
+    term = (term or "").lower()
+    out = []
+    for name, rec in load_zmk_index().get("boards", {}).items():
+        disp = rec.get("name") or name
+        rank = _match_rank(name, disp, term) if term else 0
+        if rank >= 0:
+            out.append((rank, name, disp, {ln: len(keys) for ln, keys in rec["layouts"].items()}))
+    return [(name, disp, layouts) for _, name, disp, layouts in sorted(out)]
+
+
+def zmk_board_from_index(name, layout=None, prefer_count=None):
+    rec = load_zmk_index().get("boards", {}).get(name)
+    if rec is None:
+        raise LookupError(f"no ZMK board named {name!r} in the bundled index")
+    layouts = rec["layouts"]
+    if layout:
+        if layout not in layouts:
+            raise LookupError(f"{name} has no layout {layout!r}; it has: {', '.join(layouts)}")
+        chosen = layout
+    elif prefer_count:
+        chosen = next((ln for ln in layouts if len(layouts[ln]) == prefer_count), None) \
+            or max(layouts, key=lambda ln: len(layouts[ln]))
+    else:
+        chosen = max(layouts, key=lambda ln: len(layouts[ln]))
+    keys = _keys_from_compact(layouts[chosen])
+    rows = max(k.matrix[0] for k in keys) + 1
+    cols = max(k.matrix[1] for k in keys) + 1
+    return Board(name=rec.get("name") or name, slug=name, matrix=(rows, cols), uids=[], keys=keys,
+                 layout=chosen if len(layouts) > 1 else "", source="ZMK keyboard data", zmk_order=True)
+
+
+def _zmk_by_count(km, warn):
+    """A ZMK keymap with no usable board name: when exactly one board in the ZMK index has a
+    layout with the keymap's key count, use it (with a note); else None, and the caller
+    falls back to the grid."""
+    idx = load_zmk_index()
+    if not idx:
+        return None
+    n = max((len(layer) for layer in km.positional or []), default=0)
+    hits = []
+    for name, rec in idx.get("boards", {}).items():
+        for ln, rows in rec["layouts"].items():
+            if len(rows) == n:
+                hits.append((name, ln))
+    if len(hits) != 1:
+        return None
+    board = zmk_board_from_index(hits[0][0], hits[0][1])
+    km.resolve_positional(board)
+    det = _finish(km, board, "zmk-count")
+    det.info = (f"{km.path.name}: drawn as {board.name}, the only bundled ZMK layout with {n} keys"
+                + (f" ({warn})" if warn else "") + "; pass --board to name a different keyboard.")
+    return det
 
 
 # ---- detection ---------------------------------------------------------------------------
@@ -417,22 +548,29 @@ def detect(km, browser, board_arg=None, layout_arg=None, method_hint="board-arg"
     argument, a keyboard id or a board file settles the question, so None is accepted for
     those paths only.
     """
-    if km.kind == "qmk":
+    if km.kind in ("qmk", "zmk"):
         if board_arg == "grid":
             return _positional_grid(km, _renderer(browser), warning="")
         name = board_arg or km.keyboard
         layout = layout_arg or km.layout_name
         method = method_hint if board_arg else "keyboard-field"
         board, warn = None, ""
+        count = max((len(layer) for layer in km.positional or []), default=0)
         if name:
             try:
-                board = load_board(name, layout)
+                board = load_board(name, layout, prefer_count=count if km.kind == "zmk" else None)
             except LookupError as e:
                 warn = str(e)
+        if board is None and km.kind == "zmk":
+            zdet = _zmk_by_count(km, warn)
+            if zdet is not None:
+                return zdet
         if board is None:
+            no_name = ("a ZMK keymap names no keyboard." if km.kind == "zmk" else "the file names no keyboard.")
             return _positional_grid(km, _renderer(browser),
-                                    warning=f"{km.path.name}: " + (warn if name else "the file names no keyboard.") +
-                                            " Drawn as a plain grid; pass --board <qmk name> for the real shape.")
+                                    warning=f"{km.path.name}: " + (warn if name else no_name) +
+                                            " Drawn as a plain grid; pass --board <name> for the real shape"
+                                            + (" (a ZMK layouts .dtsi file works too)." if km.kind == "zmk" else "."))
         km.resolve_positional(board)
         return _finish(km, board, method)
 

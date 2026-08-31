@@ -51,6 +51,11 @@ anything inside a key with `--u`.
 .key.held                  the layer's own key shown pressed
 .key.trns                  KC_TRNS, falls through to the layer below
 .key.dead                  KC_NO, nothing assigned
+.cmb-badge                 combo marker: a numbered dot on a trigger key (a .board sibling of the keys)
+.cmb-lines / .cmb-chip     combo lines mode: the svg of joining lines, and the output chip at their meeting point
+.cmb-list                  the combo list under a board (<b> holds the number)
+.cmb-prose                 one line of the combo text mode, under the layer header
+.quad[data-layer="combos"] the extra board of the combo panel mode
 .mapping                   the title, bottom-left
 .footer                    board, source file, date, notes, centred at the bottom
 .frame                     a drawing frame inset from the page edge; display:none in the base sheet

@@ -1,13 +1,15 @@
 # Keymap Image Generator
 
-Makes a picture of your keyboard's keymap, one board per layer, for anyone who runs Vial or QMK firmware.
+Makes a picture of your keyboard's keymap, one board per layer, for anyone who runs Vial, QMK or ZMK firmware.
 
 ![The outrun style: four layers of a Corne keymap](docs/gallery/outrun.webp)
 
-Works with Vial `.vil` exports and QMK `keymap.json` files, knows the shape of every
-keyboard in QMK's public data (3,753 boards), and can read a Vial keyboard's own shape
-and keymap over USB for clones and one-offs. Output is an HTML page per keymap and a 4K
-PNG for a wallpaper or a forum post, in any of 33 styles.
+Works with Vial `.vil` exports, QMK `keymap.json` files and ZMK `.keymap` files, knows
+the shape of every keyboard in QMK's public data (3,753 boards) and of the ZMK boards
+that publish physical layouts, and can read a Vial keyboard's own shape and keymap over
+USB for clones and one-offs. Combos (keys pressed together that give another key) are
+drawn in your choice of four ways. Output is an HTML page per keymap and a 4K PNG for a
+wallpaper or a forum post, in any of 33 styles.
 
 ## See it
 
@@ -66,7 +68,8 @@ a three-layer keymap on a 60% board (DZ60, ANSI), for anyone whose keyboard is n
 ## Run it with your own keymap
 
 1. Export your keymap. Vial app: File → Save current layout (a `.vil` file). QMK
-   Configurator: Export keymap (a `.json` file). Save it into the `keymaps/` folder.
+   Configurator: Export keymap (a `.json` file). ZMK: the `.keymap` file from your
+   config repository, as it is. Save it into the `keymaps/` folder.
 2. Open `index.html` (in the `keymap-imgen` folder) in your browser. Opened from the folder it is a
    command builder: it reads your keymap, finds your keyboard, lets you choose layers,
    style and whether you want a PNG, and writes the command for you. Copy it.
@@ -173,6 +176,28 @@ twice the size. Both write the wide picture and one PNG per screen (`.left.png`,
   read from the file's tap-dance table. A `.vil` without the table shows "TD 3".
 - The line under each layer's title says which key reaches it ("Hold left middle thumb"),
   worked out from the geometry; treat it as a pointer to the picture, not a measurement.
+
+## Combos
+
+A combo is several keys pressed together that give another key. Vial files carry them as
+keycode pairs (resolved by searching the layers, so a combo whose keys were remapped away
+is honestly dropped); ZMK keymaps name key positions directly. When a file has combos
+they are drawn, in one of four ways, chosen on the page (Picture section) or with
+`--combos`:
+
+- **badges** (the default): a small numbered marker on each key of the combo, and a list
+  under the board (`1  J + K : Esc`).
+- **lines**: thin lines joining the keys, the output in a chip where they meet. A combo
+  that is ambiguous, on a crowded layer (more than six), or split across the two screens
+  of `--split-halves` falls back to its badge and the list.
+- **panel**: the layers stay clean and one extra board is drawn after them, titled
+  Combos, with only the combo keys filled and numbered.
+- **text**: nothing on the keys; a line of prose per combo under the layer title
+  ("J and K together give Esc").
+- **off**: nothing drawn, as before this option existed.
+
+A combo whose output is a layer switch also joins that layer's title line ("Hold ... and
+... together"), and its keys are shown held on the layer it opens.
 
 ## The page
 
@@ -297,7 +322,8 @@ layout order (a `keymap.json`), so the generator needs the shape of your board. 
 this order:
 
 1. **`--board`, or the settings file.** A QMK keyboard name such as `crkbd/rev1` or
-   `sofle/rev1`, or the name of a file in `boards/`.
+   `sofle/rev1`, a ZMK board name such as `corne` or `cornix`, a ZMK layouts `.dtsi`
+   file, or the name of a file in `boards/`.
 2. **The keyboard named inside a QMK `keymap.json`.** Used as is, with its layout.
 3. **The `uid` inside a `.vil`**, matched against the files in `boards/`. Files saved with
    `--from-usb --save-board` carry the uid, so after one read the board is recognised
@@ -312,9 +338,20 @@ this order:
    asks for this grid outright (the page's "draw a plain grid" button writes it into the
    command and the settings file), without the warning.
 
+**ZMK keyboards.** A ZMK `.keymap` names no keyboard, so the shape comes from the ZMK
+ecosystem's `zmk,physical-layout` definitions (exact per-key positions, the standard
+since ZMK Studio), on a ladder of its own: the bundled ZMK index
+(`boards/zmk-index.json.gz`, harvested from the ZMK repository and known vendor module
+repositories, see `boards/ZMK-DATA-NOTICE.md`) by name or, when only one bundled layout
+has the keymap's key count, automatically; else the board's own `-layouts.dtsi` file,
+passed as `--board path/to/x-layouts.dtsi` or dropped on the page's Keyboard section;
+else any board from the lists above (the keys are counted in visual reading order); else
+the plain grid. A file with several layouts is picked by `--layout <display name>` or by
+key count.
+
 The QMK shapes come from `boards/qmk-index.json.gz`, generated from QMK's public keyboard
-data (see `boards/QMK-DATA-NOTICE.md`; `--version` prints the refresh date of that data). Two
-board files are bundled as well:
+data (see `boards/QMK-DATA-NOTICE.md`; `--version` prints the refresh date of that data
+and of the ZMK index). Two board files are bundled as well:
 
 | Board | Keys | Notes |
 |---|---|---|
@@ -384,19 +421,26 @@ every time. The page writes one for you ("Save settings file"); by hand it looks
 ```
 
 `labels` prints words on a key whose keycode gives no clue to its purpose: macros, custom
-keycodes, or chords that mean something only on your computer. Every field is optional;
+keycodes, or chords that mean something only on your computer. A `"combos"` field
+(badges, lines, panel, text or off) picks the combo treatment. Every field is optional;
 command-line options override the file. Each sample keymap ships with one
 (`samples/corne-qwerty.settings.json`, `samples/crkbd-qwerty.settings.json`,
-`samples/dz60-qwerty.settings.json`), which is how the first run above knows the board and
-the layers.
+`samples/dz60-qwerty.settings.json`, `samples/corne-zmk.settings.json`), which is how the
+first run above knows the board and the layers.
 
 ## Limits
 
 - Legends are US ANSI. A key that produces `;` on your layout prints `;` regardless of
   the OS keyboard language.
-- Encoders, combos and macro contents are not drawn. The keys that trigger them are. A
-  tap dance shows its tap and hold (or double tap) actions; the tap-then-hold action is not
+- Encoders and macro contents are not drawn. The keys that trigger them are. A tap dance
+  shows its tap and hold (or double tap) actions; the tap-then-hold action is not
   printed.
+- A ZMK `.keymap` is read as one self-contained file: `#include` lines are ignored and
+  single-line `#define` names are substituted, so a keymap built from helper-library
+  macros (function-like `#define`s) will not parse. Hold-tap timing, macro behaviors and
+  `zmk,conditional-layers` (tri-layer) are not read; a custom hold-tap whose halves are
+  `&kp`/`&mo` prints as a mod-tap or layer-tap, and any other custom behavior prints as
+  its raw call, which is the honest fallback.
 - A keycode Vial saved as a bare number is named through QMK's keycode table under the
   file's `vial_protocol`; one the older numbering has no name for prints as hex (`0x5DB2`).
 - Layers reached only by holding two other layer keys together (QMK's tri-layer) show
@@ -405,7 +449,9 @@ the layers.
 - Anything the legend tables do not recognise prints as the raw keycode. That is the
   signal to add it; open an issue with the keycode.
 - Boards added to QMK after the index was built need `tools/build_qmk_index.py` re-run
-  (maintainers) or a hand-written board file.
+  (maintainers) or a hand-written board file; ZMK boards likewise need
+  `tools/build_zmk_index.py` (a new vendor module repository is one line in its list),
+  or their `-layouts.dtsi` passed directly.
 
 ## Checking a change
 

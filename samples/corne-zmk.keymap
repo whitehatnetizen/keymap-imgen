@@ -1,0 +1,73 @@
+/*
+ * A sample ZMK keymap for a Corne (crkbd shield): three layers, two combos and a custom
+ * home-row hold-tap, in the shape of the stock shield keymap. Render it with
+ *     python keymap-imgen.py plain samples/corne-zmk.keymap --board corne42
+ * or drop it on the web page.
+ */
+
+#include <behaviors.dtsi>
+#include <dt-bindings/zmk/keys.h>
+#include <dt-bindings/zmk/bt.h>
+
+#define NAV 2
+
+/ {
+    behaviors {
+        hml: home_row_mod_left {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "balanced";
+            tapping-term-ms = <200>;
+            bindings = <&kp>, <&kp>;
+        };
+    };
+
+    combos {
+        compatible = "zmk,combos";
+        combo_esc {
+            timeout-ms = <50>;
+            key-positions = <19 20>;
+            bindings = <&kp ESC>;
+        };
+        combo_nav {
+            timeout-ms = <50>;
+            key-positions = <16 19>;
+            bindings = <&mo NAV>;
+            layers = <0>;
+        };
+    };
+
+    keymap {
+        compatible = "zmk,keymap";
+
+        default_layer {
+            display-name = "Base";
+            bindings = <
+&kp TAB    &kp Q         &kp W  &kp E     &kp R  &kp T        &kp Y    &kp U        &kp I      &kp O    &kp P     &kp BSPC
+&kp LCTRL  &hml LSHFT A  &kp S  &kp D     &kp F  &kp G        &kp H    &kp J        &kp K      &kp L    &kp SEMI  &kp SQT
+&kp LSHFT  &kp Z         &kp X  &kp C     &kp V  &kp B        &kp N    &kp M        &kp COMMA  &kp DOT  &kp FSLH  &kp RSHFT
+                                &kp LGUI  &mo 1  &kp SPACE    &kp RET  &lt NAV ESC  &kp RALT
+            >;
+        };
+
+        lower_layer {
+            display-name = "Numbers";
+            bindings = <
+&kp TAB    &kp N1        &kp N2        &kp N3        &kp N4  &kp N5    &kp N6    &kp N7  &kp N8  &kp N9    &kp N0  &kp BSPC
+&kp LCTRL  &bt BT_SEL 0  &bt BT_SEL 1  &bt BT_CLR    &trans  &trans    &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &trans  &trans
+&kp LSHFT  &kp EXCL      &kp AT        &kp HASH      &trans  &trans    &kp MINUS  &kp EQUAL  &kp LBKT  &kp RBKT  &kp BSLH  &kp GRAVE
+                                       &kp LGUI      &trans  &kp SPACE    &kp RET  &trans  &kp RALT
+            >;
+        };
+
+        raise_layer {
+            display-name = "Nav";
+            bindings = <
+&kp ESC    &kp EXCL  &kp AT    &kp HASH  &kp DLLR  &kp PRCNT    &kp CARET  &kp AMPS  &kp STAR  &kp LPAR  &kp RPAR  &kp DEL
+&kp LCTRL  &trans    &trans    &trans    &trans    &trans       &kp HOME   &kp PG_DN  &kp PG_UP  &kp END  &trans  &kp TILDE
+&kp LSHFT  &trans    &trans    &trans    &trans    &trans       &trans     &trans    &kp COMMA  &kp DOT  &kp FSLH  &sys_reset
+                               &kp LGUI  &trans    &kp SPACE    &kp RET    &trans    &kp RALT
+            >;
+        };
+    };
+};

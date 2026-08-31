@@ -28,8 +28,10 @@ function isDigits(s) { return /^\d+$/.test(s); }
    The command line has its own reader (vilimg/vil.py); this one is for
    the page. They are the one intended duplicate: keep them in step. */
 
-// "_______" and "XXXXXXX" are QMK's keymap.json spellings of KC_TRNS and KC_NO
-var EMPTY_CODES = {"KC_NO": 1, "KC_TRNS": 1, "KC_TRANSPARENT": 1, "_______": 1, "XXXXXXX": 1};
+// "_______" and "XXXXXXX" are QMK's keymap.json spellings of KC_TRNS and KC_NO;
+// "&trans" and "&none" are the same two in a ZMK keymap
+var EMPTY_CODES = {"KC_NO": 1, "KC_TRNS": 1, "KC_TRANSPARENT": 1, "_______": 1, "XXXXXXX": 1,
+                   "&trans": 1, "&none": 1};
 
 function isEmptyCode(code) { return code === -1 || (typeof code === "string" && has(EMPTY_CODES, code)); }
 
@@ -56,6 +58,7 @@ function parseKeymap(text, name) {
   try {
     data = JSON.parse(text);
   } catch (e) {
+    if (text.indexOf("zmk,keymap") >= 0) return parseZmkKeymap(text, name);
     throw new Error(name + ": not valid JSON (" + e.message + ")");
   }
   if (!data || typeof data !== "object" || Array.isArray(data)) throw new Error(name + ": expected a JSON object");
@@ -70,7 +73,8 @@ function parseKeymap(text, name) {
     return {name: name, stem: stemOf(name), kind: "vil", uid: uidOf(text, data), layers: layout,
             layer_names: {}, keyboard: null, layout_name: null, positional: null, extra: extra, warnings: [],
             vial_protocol: typeof data.vial_protocol === "number" ? data.vial_protocol : null,
-            tap_dance: Array.isArray(data.tap_dance) ? data.tap_dance : []};
+            tap_dance: Array.isArray(data.tap_dance) ? data.tap_dance : [],
+            combo: Array.isArray(data.combo) ? data.combo : [], zmk_behaviors: {}};
   }
   if (isKeymapJson(data)) {
     var layers = data.layers;
@@ -83,7 +87,8 @@ function parseKeymap(text, name) {
     return {name: name, stem: stemOf(name), kind: "qmk", uid: null, layers: [], layer_names: names,
             keyboard: data.keyboard == null ? null : String(data.keyboard),
             layout_name: typeof data.layout === "string" ? data.layout : null,
-            positional: layers, extra: extra2, warnings: [], vial_protocol: null, tap_dance: []};
+            positional: layers, extra: extra2, warnings: [], vial_protocol: null, tap_dance: [],
+            combo: [], zmk_behaviors: {}};
   }
   throw new Error(name + ": neither a Vial .vil ('layout' list of layers) nor a QMK keymap.json ('keyboard' and 'layers')");
 }
@@ -138,7 +143,17 @@ function nonemptyLayers(km) {
   return out;
 }
 
-/* Build matrix arrays for a positional (qmk) keymap from a board's key order. */
+/* A board's keys sorted into visual reading order (rows top to bottom, left to right):
+   the order a ZMK keymap's bindings and combo key positions are numbered in. */
+function zmkOrderKeys(keys) {
+  var pairs = matrixFromGeometry(keys);
+  return keys.map(function (k, i) { return [pairs[i], k]; })
+    .sort(function (a, b) { return a[0][0] - b[0][0] || a[0][1] - b[0][1]; })
+    .map(function (t) { return t[1]; });
+}
+
+/* Build matrix arrays for a positional (qmk or zmk) keymap from a board's key order; a ZMK
+   keymap counts the board's keys in reading order, whatever order the board file has. */
 function resolvePositional(km, board) {
   if (!km.positional) return;
   board = normBoard(board);
@@ -149,12 +164,17 @@ function resolvePositional(km, board) {
     rows = Math.max(rows, board.matrix[0]);
     cols = Math.max(cols, board.matrix[1]);
   }
+  // a foreign board (hand file, QMK layout, USB read): assume ZMK counts its keys in visual
+  // reading order; a board from a ZMK layout (zmk_order) keeps its own exact order
+  var keys = km.kind === "zmk" && !board.zmk_order ? zmkOrderKeys(board.keys) : board.keys;
   km.layers = km.positional.map(function (layer) {
     var grid = [];
     for (var r = 0; r < rows; r++) { grid.push([]); for (var c = 0; c < cols; c++) grid[r].push(-1); }
-    board.keys.forEach(function (key, i) { grid[key.matrix[0]][key.matrix[1]] = i < layer.length ? layer[i] : "KC_NO"; });
+    keys.forEach(function (key, i) { grid[key.matrix[0]][key.matrix[1]] = i < layer.length ? layer[i] : "KC_NO"; });
     return grid;
   });
+  // resolve runs on every redraw: replace any earlier size warning rather than stacking copies
+  km.warnings = km.warnings.filter(function (w) { return w.indexOf(" keycodes but the layout ") < 0; });
   if (km.positional.some(function (layer) { return layer.length !== n; })) {
     var counts = {};
     km.positional.forEach(function (layer) { counts[layer.length] = 1; });
@@ -162,6 +182,270 @@ function resolvePositional(km, board) {
     km.warnings.push(km.name + ": layers have [" + list.join(", ") + "] keycodes but the layout " +
                      (board.layout || "") + " has " + n + " keys; extra codes ignored, missing ones blank");
   }
+}
+
+/* ---- zmk: devicetree reading -----------------------------------------------------------------
+
+   A ZMK .keymap is devicetree text: a node with compatible = "zmk,keymap" holds one child
+   node per layer, each with a `bindings` list of behavior calls (&kp A, &lt 2 SPACE). Combos
+   live in a "zmk,combos" node and name their keys by position; custom hold-taps in a
+   "behaviors" node. Geometry comes separately, from zmk,physical-layout nodes in a board's
+   -layouts.dtsi (key_physical_attrs rows in centi-key-units), read by zmkLayouts for the
+   board step and by tools/build_zmk_index.py for the bundled index.
+
+   A small tolerant subset parser: comments and single-line #define substitutions are
+   handled, #include lines are ignored (a self-contained file is the scope), and anything
+   unrecognised is carried through as raw text. The command line has the same parser in
+   vilimg/zmk.py; the pair is part of the one intended duplicate: keep them in step.
+   Binding-to-QMK translation happens at normalise time (zmkCode), not here. */
+
+function zmkStripComments(text) {
+  var out = [], i = 0, n = text.length;
+  while (i < n) {
+    var two = text.substr(i, 2);
+    if (two === "/*") {
+      var j = text.indexOf("*/", i + 2);
+      i = j < 0 ? n : j + 2;
+    } else if (two === "//") {
+      var k = text.indexOf("\n", i);
+      i = k < 0 ? n : k;
+    } else {
+      out.push(text[i]);
+      i += 1;
+    }
+  }
+  return out.join("");
+}
+
+var ZMK_DEFINE = /^[ \t]*#[ \t]*define[ \t]+(\w+)(\([^)]*\))?[ \t]*(.*?)[ \t]*$/gm;
+var ZMK_PREPROC = /^[ \t]*#.*$/gm;
+var ZMK_NUMBER = /^\(?(-?\d+)\)?$/;
+
+/* Single-line #define NAME value substitutions applied to the body; function-like macros are
+   left alone, and every remaining preprocessor line (#include, #if) drops. */
+function zmkApplyDefines(text) {
+  var defs = {}, m;
+  ZMK_DEFINE.lastIndex = 0;
+  while ((m = ZMK_DEFINE.exec(text)) !== null) {
+    if (!m[2] && m[1] !== m[3]) defs[m[1]] = m[3];
+  }
+  var body = text.replace(ZMK_PREPROC, "");
+  if (Object.keys(defs).length) {
+    for (var i = 0; i < 5; i++) {       // a define may name another define
+      var replaced = body.replace(/\b[A-Za-z_]\w*\b/g, function (w) { return has(defs, w) ? defs[w] : w; });
+      if (replaced === body) break;
+      body = replaced;
+    }
+  }
+  return body;
+}
+
+/* The node tree: each node {name, label, props: {name: raw value or true}, children}. */
+function zmkParseTree(text) {
+  var root = {name: "", label: "", props: {}, children: []};
+  var stack = [root], buf = [];
+  for (var i = 0; i < text.length; i++) {
+    var ch = text[i];
+    if (ch === "{") {
+      var tokens = buf.join("").replace(/:/g, ": ").split(/\s+/).filter(Boolean);
+      var name = tokens.length ? tokens[tokens.length - 1] : "";
+      var label = tokens.length > 1 && tokens[tokens.length - 2].slice(-1) === ":"
+        ? tokens[tokens.length - 2].slice(0, -1) : "";
+      var node = {name: name, label: label, props: {}, children: []};
+      stack[stack.length - 1].children.push(node);
+      stack.push(node);
+      buf = [];
+    } else if (ch === "}") {
+      if (stack.length > 1) stack.pop();
+      buf = [];
+    } else if (ch === ";") {
+      var s = buf.join("").trim();
+      if (s) {
+        var eq = s.indexOf("=");
+        if (eq >= 0) stack[stack.length - 1].props[s.slice(0, eq).trim()] = s.slice(eq + 1).trim();
+        else stack[stack.length - 1].props[s] = true;
+      }
+      buf = [];
+    } else {
+      buf.push(ch);
+    }
+  }
+  return root;
+}
+
+/* A string property without its quotes, or "". */
+function zmkPropString(node, key) {
+  var v = node.props[key];
+  if (typeof v !== "string") return "";
+  var m = /"([^"]*)"/.exec(v);
+  return m ? m[1] : v.trim();
+}
+
+/* The numbers of a <...> property, flattened across groups; (-3000) reads as -3000. */
+function zmkPropCells(node, key) {
+  var v = node.props[key], out = [];
+  if (typeof v !== "string") return out;
+  var groups = v.match(/<([^>]*)>/g) || [];
+  groups.forEach(function (g) {
+    g.slice(1, -1).split(/\s+/).forEach(function (tok) {
+      var m = ZMK_NUMBER.exec(tok);
+      if (m) out.push(parseInt(m[1], 10));
+    });
+  });
+  return out;
+}
+
+/* The behavior calls of a bindings property, one string each: `<&kp A &lt 2 SPACE>` gives
+   ["&kp A", "&lt 2 SPACE"]. Groups (`<&kp>, <&mo>`) are read in order. */
+function zmkPropBindings(node, key) {
+  var v = node.props[key || "bindings"], tokens = [];
+  if (typeof v !== "string") return [];
+  (v.match(/<([^>]*)>/g) || []).forEach(function (g) {
+    g.slice(1, -1).split(/\s+/).forEach(function (tok) { if (tok) tokens.push(tok); });
+  });
+  var out = [], cur = null;
+  tokens.forEach(function (tok) {
+    if (tok.charAt(0) === "&") {
+      if (cur) out.push(cur.join(" "));
+      cur = [tok];
+    } else if (cur) {
+      cur.push(tok);
+    }
+  });
+  if (cur) out.push(cur.join(" "));
+  return out;
+}
+
+/* Every node whose compatible property is the given string, depth first. */
+function zmkFindNodes(root, compatible) {
+  var out = [];
+  (function walk(node) {
+    if (zmkPropString(node, "compatible") === compatible) out.push(node);
+    node.children.forEach(walk);
+  })(root);
+  return out;
+}
+
+/* A km object (the parseKeymap shape) from ZMK .keymap text: kind "zmk", positional layers
+   of raw binding strings, position-addressed combos, custom hold-tap behaviors. */
+function parseZmkKeymap(text, name) {
+  var root = zmkParseTree(zmkApplyDefines(zmkStripComments(text)));
+  var keymaps = zmkFindNodes(root, "zmk,keymap");
+  if (!keymaps.length) {
+    throw new Error(name + ": no zmk,keymap node found. A ZMK keymap file has a node with " +
+                    'compatible = "zmk,keymap" holding one child node per layer');
+  }
+  var layers = [], names = {};
+  keymaps[0].children.forEach(function (child) {
+    var bindings = zmkPropBindings(child);
+    if (!bindings.length) return;
+    var label = zmkPropString(child, "display-name") || zmkPropString(child, "label") || child.name;
+    if (label) names[String(layers.length)] = label;
+    layers.push(bindings);
+  });
+  if (!layers.length) throw new Error(name + ": the zmk,keymap node has no layers with bindings");
+  var combos = [];
+  zmkFindNodes(root, "zmk,combos").forEach(function (comboNode) {
+    comboNode.children.forEach(function (child) {
+      var positions = zmkPropCells(child, "key-positions");
+      var outputs = zmkPropBindings(child);
+      if (positions.length < 2 || !outputs.length) return;
+      var layerList = zmkPropCells(child, "layers");
+      combos.push({keyPositions: positions, output: outputs[0],
+                   layers: layerList.length ? layerList : null, triggers: []});
+    });
+  });
+  var behaviors = {};
+  zmkFindNodes(root, "zmk,behavior-hold-tap").forEach(function (node) {
+    var calls = zmkPropBindings(node);
+    var key = node.label || node.name;
+    if (key && calls.length === 2) behaviors[key] = {hold: calls[0], tap: calls[1]};
+  });
+  return {name: name, stem: stemOf(name), kind: "zmk", uid: null, layers: [], layer_names: names,
+          keyboard: null, layout_name: null, positional: layers, extra: {}, warnings: [],
+          vial_protocol: null, tap_dance: [], combo: combos, zmk_behaviors: behaviors};
+}
+
+/* The key's centre as drawn, after any rotation about (rx, ry); for raw key dicts. */
+function geomCentre(k) {
+  var w = k.w == null ? 1 : k.w, h = k.h == null ? 1 : k.h;
+  var cx = k.x + w / 2, cy = k.y + h / 2;
+  if (k.r) {
+    var a = k.r * Math.PI / 180, rx = k.rx == null ? cx : k.rx, ry = k.ry == null ? cy : k.ry;
+    var dx = cx - rx, dy = cy - ry;
+    cx = rx + dx * Math.cos(a) - dy * Math.sin(a);
+    cy = ry + dx * Math.sin(a) + dy * Math.cos(a);
+  }
+  return [cx, cy];
+}
+
+/* Synthesised [row, col] pairs for keys that arrive as a plain position list (a ZMK physical
+   layout has no matrix): keys whose drawn centre y differ by less than half a key unit are
+   one row, numbered top to bottom, columns left to right within the row: visual reading
+   order, the order ZMK numbers its keys in. */
+function matrixFromGeometry(keys) {
+  var centres = keys.map(geomCentre);
+  var order = keys.map(function (k, i) { return i; }).sort(function (a, b) {
+    return centres[a][1] - centres[b][1] || centres[a][0] - centres[b][0];
+  });
+  var rows = [], lastY = null;
+  order.forEach(function (i) {
+    var cy = centres[i][1];
+    if (lastY === null || cy - lastY >= 0.5) { rows.push([]); lastY = cy; }
+    rows[rows.length - 1].push(i);
+  });
+  var out = [];
+  rows.forEach(function (row, r) {
+    row.sort(function (a, b) { return centres[a][0] - centres[b][0]; }).forEach(function (i, c) { out[i] = [r, c]; });
+  });
+  return out;
+}
+
+/* Every zmk,physical-layout in a devicetree file (a -layouts.dtsi), in source order:
+   [{name, keys: [{x, y, w, h, r, rx, ry}]}], converted from centi-key-units. */
+function zmkLayouts(text, name) {
+  var root = zmkParseTree(zmkApplyDefines(zmkStripComments(text)));
+  var out = [];
+  zmkFindNodes(root, "zmk,physical-layout").forEach(function (node) {
+    var v = node.props.keys, rows = [];
+    if (typeof v === "string") {
+      var nums = [];
+      (v.match(/<([^>]*)>/g) || []).forEach(function (g) {
+        g.slice(1, -1).split(/\s+/).forEach(function (tok) {
+          var m = ZMK_NUMBER.exec(tok);
+          if (m) nums.push(parseInt(m[1], 10));
+        });
+      });
+      for (var start = 0; start + 7 <= nums.length; start += 7) {
+        var key = {x: nums[start + 2] / 100, y: nums[start + 3] / 100,
+                   w: nums[start] / 100, h: nums[start + 1] / 100};
+        if (nums[start + 4]) {
+          key.r = nums[start + 4] / 100;
+          key.rx = nums[start + 5] / 100;
+          key.ry = nums[start + 6] / 100;
+        }
+        rows.push(key);
+      }
+    }
+    if (rows.length) out.push({name: zmkPropString(node, "display-name") || node.name, keys: rows});
+  });
+  if (!out.length) throw new Error((name || "layouts") + ": no zmk,physical-layout node with keys found");
+  return out;
+}
+
+/* A board (plain data, the boards/<slug>.json shape) from one zmkLayouts entry. */
+function boardFromZmkLayout(layout, slug, source) {
+  var pairs = matrixFromGeometry(layout.keys);
+  var keys = layout.keys.map(function (k, i) {
+    var raw = {matrix: pairs[i], x: k.x, y: k.y, w: k.w, h: k.h};
+    if (k.r) { raw.r = k.r; raw.rx = k.rx; raw.ry = k.ry; }
+    return normKey(raw);
+  });
+  var rows = 0, cols = 0;
+  pairs.forEach(function (p) { rows = Math.max(rows, p[0] + 1); cols = Math.max(cols, p[1] + 1); });
+  return normBoard({name: layout.name || slug, slug: slug || "", matrix: [rows, cols], uids: [],
+                    keys: keys, layout: layout.name || "", source: source || "ZMK physical layout",
+                    zmk_order: true});
 }
 
 /* ---- geometry: keys and boards ---------------------------------------------------------------
@@ -188,7 +472,7 @@ function normBoard(b) {
   if (b && b._norm) return b;
   var out = {name: b.name || "", slug: b.slug || "", matrix: b.matrix ? [b.matrix[0] || 0, b.matrix[1] || 0] : [0, 0],
              uids: (b.uids || []).map(String), keys: (b.keys || []).map(normKey), note: b.note || "",
-             layout: b.layout || "", source: b.source || "", _norm: true};
+             layout: b.layout || "", source: b.source || "", zmk_order: !!b.zmk_order, _norm: true};
   return out;
 }
 
@@ -512,6 +796,75 @@ var FIT = 0.98;            // fraction of its cell a board fills
 var MAX_PITCH = 110;       // px at scale 1; keys stop growing here (a macropad alone on a page)
 var KEY_GAP = 0.09;        // fraction of the pitch left between keys
 
+/* ZMK key names -> QMK keycodes, for zmkCode. Letters, digits (N1) and F keys are handled by
+   pattern; this table holds the rest of the common names. An unknown name passes through and
+   prints as itself, which is the signal to add it. */
+var ZMK_KEYS = {
+  "EXCL":"KC_EXLM", "AT":"KC_AT", "AT_SIGN":"KC_AT", "HASH":"KC_HASH", "POUND":"KC_HASH",
+  "DLLR":"KC_DLR", "DOLLAR":"KC_DLR", "PRCNT":"KC_PERC", "PERCENT":"KC_PERC", "CARET":"KC_CIRC",
+  "AMPS":"KC_AMPR", "AMPERSAND":"KC_AMPR", "STAR":"KC_ASTR", "ASTRK":"KC_ASTR", "ASTERISK":"KC_ASTR",
+  "LPAR":"KC_LPRN", "RPAR":"KC_RPRN", "EQUAL":"KC_EQL", "MINUS":"KC_MINS", "PLUS":"KC_PLUS",
+  "UNDER":"KC_UNDS", "UNDERSCORE":"KC_UNDS", "LBKT":"KC_LBRC", "RBKT":"KC_RBRC",
+  "LBRC":"KC_LCBR", "LEFT_BRACE":"KC_LCBR", "RBRC":"KC_RCBR", "RIGHT_BRACE":"KC_RCBR",
+  "SEMI":"KC_SCLN", "SEMICOLON":"KC_SCLN", "COLON":"KC_COLN", "SQT":"KC_QUOT", "APOS":"KC_QUOT",
+  "APOSTROPHE":"KC_QUOT", "DQT":"KC_DQUO", "DOUBLE_QUOTES":"KC_DQUO", "GRAVE":"KC_GRV",
+  "TILDE":"KC_TILD", "COMMA":"KC_COMM", "DOT":"KC_DOT", "PERIOD":"KC_DOT", "FSLH":"KC_SLSH",
+  "SLASH":"KC_SLSH", "QMARK":"KC_QUES", "QUESTION":"KC_QUES", "BSLH":"KC_BSLS", "BACKSLASH":"KC_BSLS",
+  "PIPE":"KC_PIPE", "LT":"KC_LT", "LESS_THAN":"KC_LT", "GT":"KC_GT", "GREATER_THAN":"KC_GT",
+  "NON_US_BSLH":"KC_NUBS", "NON_US_BACKSLASH":"KC_NUBS", "PIPE2":"KC_NUBS", "NON_US_HASH":"KC_NUHS",
+  "ESC":"KC_ESC", "ESCAPE":"KC_ESC", "RET":"KC_ENT", "RETURN":"KC_ENT", "ENTER":"KC_ENT",
+  "SPACE":"KC_SPC", "TAB":"KC_TAB", "BSPC":"KC_BSPC", "BACKSPACE":"KC_BSPC", "DEL":"KC_DEL",
+  "DELETE":"KC_DEL", "INS":"KC_INS", "INSERT":"KC_INS", "HOME":"KC_HOME", "END":"KC_END",
+  "PG_UP":"KC_PGUP", "PAGE_UP":"KC_PGUP", "PG_DN":"KC_PGDN", "PAGE_DOWN":"KC_PGDN",
+  "UP":"KC_UP", "UP_ARROW":"KC_UP", "DOWN":"KC_DOWN", "DOWN_ARROW":"KC_DOWN",
+  "LEFT":"KC_LEFT", "LEFT_ARROW":"KC_LEFT", "RIGHT":"KC_RGHT", "RIGHT_ARROW":"KC_RGHT",
+  "CAPS":"KC_CAPS", "CAPSLOCK":"KC_CAPS", "CLCK":"KC_CAPS", "PSCRN":"KC_PSCR",
+  "PRINTSCREEN":"KC_PSCR", "SLCK":"KC_SLCK", "SCROLLLOCK":"KC_SLCK", "PAUSE_BREAK":"KC_PAUS",
+  "K_APP":"KC_APP", "K_APPLICATION":"KC_APP", "K_CMENU":"KC_APP", "K_CONTEXT_MENU":"KC_APP",
+  "LSHFT":"KC_LSFT", "LSHIFT":"KC_LSFT", "LEFT_SHIFT":"KC_LSFT", "RSHFT":"KC_RSFT",
+  "RSHIFT":"KC_RSFT", "RIGHT_SHIFT":"KC_RSFT", "LCTRL":"KC_LCTL", "LEFT_CONTROL":"KC_LCTL",
+  "RCTRL":"KC_RCTL", "RIGHT_CONTROL":"KC_RCTL", "LALT":"KC_LALT", "LEFT_ALT":"KC_LALT",
+  "RALT":"KC_RALT", "RIGHT_ALT":"KC_RALT", "LGUI":"KC_LGUI", "LEFT_GUI":"KC_LGUI",
+  "LWIN":"KC_LGUI", "LCMD":"KC_LGUI", "LMETA":"KC_LGUI", "RGUI":"KC_RGUI", "RIGHT_GUI":"KC_RGUI",
+  "RWIN":"KC_RGUI", "RCMD":"KC_RGUI", "RMETA":"KC_RGUI",
+  "KP_N0":"KC_P0", "KP_N1":"KC_P1", "KP_N2":"KC_P2", "KP_N3":"KC_P3", "KP_N4":"KC_P4",
+  "KP_N5":"KC_P5", "KP_N6":"KC_P6", "KP_N7":"KC_P7", "KP_N8":"KC_P8", "KP_N9":"KC_P9",
+  "KP_PLUS":"KC_PPLS", "KP_MINUS":"KC_PMNS", "KP_MULTIPLY":"KC_PAST", "KP_ASTERISK":"KC_PAST",
+  "KP_DIVIDE":"KC_PSLS", "KP_SLASH":"KC_PSLS", "KP_DOT":"KC_PDOT", "KP_COMMA":"KC_KP_COMMA",
+  "KP_ENTER":"KC_KP_ENTER", "KP_EQUAL":"KC_PEQL", "KP_NUM":"KC_NUM", "KP_NUMLOCK":"KC_NUM",
+  "LNUM":"KC_NUM",
+  "C_PLAY":"KC_MPLY", "C_PAUSE":"KC_MPLY", "C_PP":"KC_MPLY", "C_PLAY_PAUSE":"KC_MPLY",
+  "C_NEXT":"KC_MNXT", "C_PREV":"KC_MPRV", "C_PREVIOUS":"KC_MPRV", "C_STOP":"KC_MSTP",
+  "C_MUTE":"KC_MUTE", "C_VOL_UP":"KC_VOLU", "C_VOLUME_UP":"KC_VOLU", "C_VOL_DN":"KC_VOLD",
+  "C_VOLUME_DOWN":"KC_VOLD", "C_BRI_UP":"KC_BRIU", "C_BRI_INC":"KC_BRIU", "C_BRI_DN":"KC_BRID",
+  "C_BRI_DEC":"KC_BRID", "C_PWR":"KC_PWR", "C_POWER":"KC_PWR", "C_SLEEP":"KC_SLEP",
+  "C_AL_CALC":"KC_CALC", "C_AL_CALCULATOR":"KC_CALC", "C_FF":"KC_MFFD", "C_FAST_FORWARD":"KC_MFFD",
+  "C_RW":"KC_MRWD", "C_REWIND":"KC_MRWD", "C_EJECT":"KC_EJCT",
+  "K_MUTE":"KC_MUTE", "K_VOL_UP":"KC_VOLU", "K_VOL_DN":"KC_VOLD", "K_COPY":"KC_COPY",
+  "K_PASTE":"KC_PSTE", "K_CUT":"KC_CUT", "K_UNDO":"KC_UNDO", "K_REDO":"KC_AGIN",
+  "K_FIND":"KC_FIND", "K_CALC":"KC_CALC", "K_CALCULATOR":"KC_CALC", "K_SLEEP":"KC_SLEP",
+  "K_PWR":"KC_PWR", "K_POWER":"KC_PWR", "K_LOCK":"KC_NO",
+  "INT1":"KC_INT1", "INT2":"KC_INT2", "INT3":"KC_INT3", "INT4":"KC_INT4", "INT5":"KC_INT5",
+  "INT_RO":"KC_INT1", "INT_KANA":"KC_INT2", "INT_YEN":"KC_INT3", "INT_HENKAN":"KC_INT4",
+  "INT_MUHENKAN":"KC_INT5", "LANG1":"KC_LANG1", "LANG2":"KC_LANG2"
+};
+/* ZMK modifier wrappers and modifier names -> QMK spellings. */
+var ZMK_WRAP = {"LS":"LSFT", "LC":"LCTL", "LA":"LALT", "LG":"LGUI",
+                "RS":"RSFT", "RC":"RCTL", "RA":"RALT", "RG":"RGUI"};
+var ZMK_MOD_BITS = {
+  "LSHFT":"MOD_LSFT", "LSHIFT":"MOD_LSFT", "LEFT_SHIFT":"MOD_LSFT",
+  "RSHFT":"MOD_RSFT", "RSHIFT":"MOD_RSFT", "RIGHT_SHIFT":"MOD_RSFT",
+  "LCTRL":"MOD_LCTL", "LEFT_CONTROL":"MOD_LCTL", "RCTRL":"MOD_RCTL", "RIGHT_CONTROL":"MOD_RCTL",
+  "LALT":"MOD_LALT", "LEFT_ALT":"MOD_LALT", "RALT":"MOD_RALT", "RIGHT_ALT":"MOD_RALT",
+  "LGUI":"MOD_LGUI", "LEFT_GUI":"MOD_LGUI", "LWIN":"MOD_LGUI", "LCMD":"MOD_LGUI",
+  "RGUI":"MOD_RGUI", "RIGHT_GUI":"MOD_RGUI", "RWIN":"MOD_RGUI", "RCMD":"MOD_RGUI"
+};
+/* &rgb_ug argument spellings that differ from QMK's RGB_ names. */
+var ZMK_RGB = {"RGB_EFF":"RGB_MOD", "RGB_EFR":"RGB_RMOD", "RGB_BRI":"RGB_VAI", "RGB_BRD":"RGB_VAD",
+               "RGB_ON":"RGB on", "RGB_OFF":"RGB off"};
+var ZMK_BL = {"BL_TOG":"BL_TOGG", "BL_ON":"BL_ON", "BL_OFF":"BL_OFF", "BL_INC":"BL_INC",
+              "BL_DEC":"BL_DEC", "BL_CYCLE":"BL_STEP"};
+
 /* ---- end of TABLES ---- */
 
 /* ---- legends: what is printed on a key -------------------------------------------------------
@@ -582,18 +935,103 @@ function normaliseCode(code, protocol) {
   return code;
 }
 
-/* A copy of the keymap with every layer cell and tap-dance action normalised. */
+/* One ZMK key parameter as a QMK keycode: A -> KC_A, N1 -> KC_1, EXCL -> KC_EXLM,
+   LS(N1) -> LSFT(KC_1). An unknown name passes through and prints as itself. */
+function zmkKey(name) {
+  var m = CALL.exec(name);
+  if (m && has(ZMK_WRAP, m[1])) return ZMK_WRAP[m[1]] + "(" + zmkKey(m[2]) + ")";
+  if (has(ZMK_KEYS, name)) return ZMK_KEYS[name];
+  if (/^[A-Z]$/.test(name) || /^F\d{1,2}$/.test(name)) return "KC_" + name;
+  if (/^N\d$/.test(name)) return "KC_" + name.slice(1);
+  return name;
+}
+
+function zmkMod(name) { return get(ZMK_MOD_BITS, name, ""); }
+
+/* One ZMK binding string ("&kp A", "&lt 2 SPACE") as a QMK keycode, so the legend tables
+   are reused untouched. `defs` are the file's custom hold-taps ({name: {hold, tap}}): one
+   whose halves are &mo/&kp or &kp/&kp reads as a layer-tap or mod-tap. Anything else keeps
+   its raw call and prints as a tag with the behavior's name. */
+function zmkCode(code, defs) {
+  if (typeof code !== "string" || code.charAt(0) !== "&") return code;
+  var parts = code.split(/\s+/), name = parts[0].slice(1), args = parts.slice(1);
+  switch (name) {
+    case "kp": return args.length ? zmkKey(args[0]) : "KC_NO";
+    case "trans": return "KC_TRNS";
+    case "none": return "KC_NO";
+    case "mo": return "MO(" + args[0] + ")";
+    case "lt": return "LT(" + args[0] + "," + zmkKey(args[1] || "") + ")";
+    case "mt": return zmkMod(args[0]) ? "MT(" + zmkMod(args[0]) + "," + zmkKey(args[1] || "") + ")" : code;
+    case "to": return "TO(" + args[0] + ")";
+    case "tog": return "TG(" + args[0] + ")";
+    case "sl": return "OSL(" + args[0] + ")";
+    case "sk": return zmkMod(args[0]) ? "OSM(" + zmkMod(args[0]) + ")" : code;
+    case "caps_word": return "CW_TOGG";
+    case "key_repeat": return "QK_REP";
+    case "bootloader": return "QK_BOOT";
+    case "sys_reset": return "QK_RBT";
+    case "gresc": return "KC_GESC";
+    case "kt": return args.length ? zmkKey(args[0]) : code;
+    case "bt":
+      if (args[0] === "BT_CLR") return "BT clear";
+      if (args[0] === "BT_CLR_ALL") return "BT clear all";
+      if (args[0] === "BT_NXT") return "BT next";
+      if (args[0] === "BT_PRV") return "BT prev";
+      if (args[0] === "BT_SEL" && args[1] != null) return "BT " + (parseInt(args[1], 10) + 1);
+      if (args[0] === "BT_DISC" && args[1] != null) return "BT " + (parseInt(args[1], 10) + 1) + " off";
+      return code;
+    case "out":
+      if (args[0] === "OUT_TOG") return "USB/BLE";
+      if (args[0] === "OUT_USB") return "USB";
+      if (args[0] === "OUT_BLE") return "BLE";
+      return code;
+    case "rgb_ug": return args.length ? get(ZMK_RGB, args[0], args[0]) : code;
+    case "bl": return args.length ? get(ZMK_BL, args[0], args[0]) : code;
+    case "ext_power": return "Ext power";
+    case "soft_off": return "Power off";
+    case "studio_unlock": return "Studio unlock";
+  }
+  var d = defs && has(defs, name) ? defs[name] : null;
+  if (d && args.length === 2) {
+    if (d.hold === "&mo" && d.tap === "&kp") return "LT(" + args[0] + "," + zmkKey(args[1]) + ")";
+    if (d.hold === "&kp" && d.tap === "&kp" && zmkMod(args[0])) {
+      return "MT(" + zmkMod(args[0]) + "," + zmkKey(args[1]) + ")";
+    }
+  }
+  return code;
+}
+
+/* A copy of the keymap with every layer cell and tap-dance action normalised; a ZMK keymap's
+   binding strings become QMK keycodes here, so everything downstream reads one spelling. */
 function normaliseKeymap(km) {
   var protocol = km.vial_protocol == null ? 6 : km.vial_protocol;
+  var zmkDefs = km.kind === "zmk" ? (km.zmk_behaviors || {}) : null;
+  function norm(c) { return zmkDefs ? zmkCode(c, zmkDefs) : normaliseCode(c, protocol); }
   var out = {};
   Object.keys(km).forEach(function (k) { out[k] = km[k]; });
   out.layers = (km.layers || []).map(function (layer) {
-    return layer.map(function (row) { return row.map(function (c) { return normaliseCode(c, protocol); }); });
+    return layer.map(function (row) { return row.map(norm); });
   });
+  if (km.positional) {
+    out.positional = km.positional.map(function (layer) { return layer.map(norm); });
+  }
   out.tap_dance = (km.tap_dance || []).map(function (entry) {
     // [on tap, on hold, on double tap, on tap then hold, tapping term]: the term is a number and stays one
     if (!Array.isArray(entry)) return entry;
     return entry.map(function (c, i) { return i < 4 ? normaliseCode(c, protocol) : c; });
+  });
+  out.combo = (km.combo || []).map(function (entry) {
+    // Vial: [trigger, trigger, trigger, trigger, output], KC_NO padding; a bare number is a
+    // keycode Vial had no name for. A ZMK combo is an object; its output is translated.
+    if (Array.isArray(entry)) return entry.map(function (c) { return normaliseCode(c, protocol); });
+    if (zmkDefs && entry && typeof entry === "object") {
+      var e = {};
+      Object.keys(entry).forEach(function (k) { e[k] = entry[k]; });
+      e.output = zmkCode(entry.output, zmkDefs);
+      e.triggers = (entry.triggers || []).map(norm);
+      return e;
+    }
+    return entry;
   });
   return out;
 }
@@ -744,8 +1182,9 @@ function layerTarget(code, td) {
 }
 
 /* {layer: [{layer, pos: [r, c], verb, held, pos2?}]}, read from layer 0. A tri-layer pair adds
-   one entry for the adjust layer with both positions (pos and pos2). */
-function accesses(km) {
+   one entry for the adjust layer with both positions (pos and pos2); a combo whose output is a
+   layer switch (`marks` from comboMarks) adds one with every trigger position (posns, cmb). */
+function accesses(km, marks) {
   var out = {}, tri = {};
   if (!km.layers.length) return out;
   km.layers[0].forEach(function (row, r) {
@@ -762,6 +1201,13 @@ function accesses(km) {
     if (!has(out, TRI_ADJUST)) out[TRI_ADJUST] = [];
     out[TRI_ADJUST].push({layer: TRI_ADJUST, pos: tri[1], pos2: tri[2], verb: "Hold both", held: true});
   }
+  (marks || []).forEach(function (c) {
+    var t = layerTarget(c.output, km.tap_dance);
+    if (!t || c.ambiguous) return;
+    if (!has(out, t[0])) out[t[0]] = [];
+    out[t[0]].push({layer: t[0], pos: c.positions[0], posns: c.positions, verb: t[1],
+                    held: t[1] === "Hold", cmb: true});
+  });
   return out;
 }
 
@@ -900,8 +1346,107 @@ function describe(board, pos) {
 function accessText(board, accList) {
   if (!accList || !accList.length) return "No base-layer key reaches this layer";
   return accList.map(function (a) {
-    return a.verb + " " + describe(board, a.pos) + (a.pos2 ? " and " + describe(board, a.pos2) : "");
+    var spots = a.posns || (a.pos2 ? [a.pos, a.pos2] : [a.pos]);
+    var text = a.verb + " " + spots.map(function (p) { return describe(board, p); }).join(" and ");
+    return a.cmb ? text + " together" : text;
   }).join(" or ");
+}
+
+/* ---- combos: several keys pressed together producing another key ---------------------------
+
+   A Vial file stores combos as 32 slots of [t1, t2, t3, t4, output] with KC_NO padding; a
+   slot counts once it has two or more real triggers and a real output. The triggers are
+   keycodes, so where a combo sits is found by searching the layers for them. A ZMK combo
+   (an object with `keyPositions`, indexes into the board's key order) names its keys
+   directly and skips the search. The CSS class .combo and the combo() legend above are
+   the older meaning, a modifier chord printed on one key; everything here uses `cmb`. */
+
+/* The file's usable combos, in file order:
+   [{triggers: [codes], output, keyPositions: [i] | null, layers: [n] | null}]. */
+function comboEntries(km) {
+  var out = [];
+  (km.combo || []).forEach(function (entry) {
+    if (Array.isArray(entry)) {
+      if (entry.length < 5 || isEmptyCode(entry[4])) return;
+      var trig = entry.slice(0, 4).filter(function (c) { return !isEmptyCode(c); });
+      if (trig.length < 2) return;
+      out.push({triggers: trig, output: entry[4], keyPositions: null, layers: null});
+    } else if (entry && typeof entry === "object" && Array.isArray(entry.keyPositions)) {
+      if (entry.keyPositions.length < 2 || isEmptyCode(entry.output)) return;
+      out.push({triggers: Array.isArray(entry.triggers) ? entry.triggers : [], output: entry.output,
+                keyPositions: entry.keyPositions,
+                layers: Array.isArray(entry.layers) && entry.layers.length ? entry.layers : null});
+    }
+  });
+  return out;
+}
+
+/* The matrix positions holding `code` on one layer. */
+function findCode(km, layer, code) {
+  var hits = [], grid = km.layers[layer] || [];
+  grid.forEach(function (row, r) {
+    row.forEach(function (c, cc) { if (c === code) hits.push([r, cc]); });
+  });
+  return hits;
+}
+
+/* Where each combo sits: [{n, triggers, output, layer, positions: [[r, c] ...], ambiguous}],
+   numbered from 1. A keycode-addressed combo lands on the first layer where every trigger is
+   assigned; a trigger matching several keys marks them all and sets `ambiguous`. A
+   position-addressed combo lands on layer 0, or the first layer it names, and its triggers
+   are read from that layer when the file did not carry them. A combo whose triggers are
+   nowhere on the board is left out. */
+function comboMarks(km, board) {
+  board = normBoard(board);
+  var out = [];
+  var orderedKeys = km.kind === "zmk" && !board.zmk_order ? zmkOrderKeys(board.keys) : board.keys;
+  comboEntries(km).forEach(function (cmb) {
+    if (cmb.keyPositions) {
+      var pos = [], trig = cmb.triggers.slice(), li = cmb.layers ? cmb.layers[0] : 0;
+      for (var i = 0; i < cmb.keyPositions.length; i++) {
+        var k = orderedKeys[cmb.keyPositions[i]];
+        if (!k) return;
+        pos.push([k.matrix[0], k.matrix[1]]);
+        if (!cmb.triggers.length) trig.push(keycodeAt(km, li, k.matrix[0], k.matrix[1]));
+      }
+      out.push({n: out.length + 1, triggers: trig, output: cmb.output, layer: li,
+                positions: pos, ambiguous: false});
+      return;
+    }
+    for (var layer = 0; layer < km.layers.length; layer++) {
+      var all = [], amb = false, found = true;
+      for (var t = 0; t < cmb.triggers.length; t++) {
+        var hits = findCode(km, layer, cmb.triggers[t]);
+        if (!hits.length) { found = false; break; }
+        if (hits.length > 1) amb = true;
+        all = all.concat(hits);
+      }
+      if (found) {
+        out.push({n: out.length + 1, triggers: cmb.triggers, output: cmb.output, layer: layer,
+                  positions: all, ambiguous: amb});
+        return;
+      }
+    }
+  });
+  return out;
+}
+
+/* The legend text for one keycode, for combo lists and prose ("Alt", "Tab", "Esc"). */
+function legendWord(code, labels, td) {
+  var lg = legend(code, labels, td);
+  return lg && lg.text ? lg.text : String(code);
+}
+
+/* "Alt + Tab : Esc" for the legend list under a board. */
+function comboLabel(cmb, labels, td) {
+  return cmb.triggers.map(function (c) { return legendWord(c, labels, td); }).join(" + ") +
+    " : " + legendWord(cmb.output, labels, td);
+}
+
+/* "Alt and Tab together give Esc" for the text treatment. */
+function comboProse(cmb, labels, td) {
+  return cmb.triggers.map(function (c) { return legendWord(c, labels, td); }).join(" and ") +
+    " together give " + legendWord(cmb.output, labels, td);
 }
 
 /* ---- render: the pages ---------------------------------------------------------------------
@@ -998,15 +1543,126 @@ function panel(p) {
   var s = scaleOf(width, height);
   var b = boundsOf(keys), minx = b[0], miny = b[1], maxx = b[2], maxy = b[3];
   var bw = p.fit ? p.fit[0] : maxx - minx, bh = p.fit ? p.fit[1] : maxy - miny;
-  var shape = gridShape(p.cells || shown.length, bw, bh, width, height), cols = shape[0], rows = shape[1];
+  var count = p.cells != null ? p.cells : shown.length + (p.cmbQuad ? 1 : 0);
+  var shape = gridShape(count, bw, bh, width, height), cols = shape[0], rows = shape[1];
   var padTop = 34 * s, padX = 44 * s, padBottom = 30 * s;
   var gapX = 56 * s, gapY = 8 * s, footerH = 22 * s;
   var c = cells(cols, rows, width, height, s);
-  var u = Math.min(c[0] / bw, c[1] / bh) * FIT;
+
+  /* Combos. `marks` come resolved from renderPages; byLayer groups them for the layer quads.
+     In `lines` a combo drops back to the badge treatment when it is ambiguous, when its layer
+     is crowded, or when its keys sit on both halves of a split drawn on separate screens. */
+  var cmbMode = p.cmbMode || "", marks = cmbMode ? (p.cmbMarks || []) : [];
+  if (!marks.length) cmbMode = "";
+  var byLayer = {};
+  marks.forEach(function (cm) { (byLayer[cm.layer] = byLayer[cm.layer] || []).push(cm); });
+  var fullMid = null;
+  if (p.fit) { var fb = boundsOf(board.keys); fullMid = (fb[0] + fb[2]) / 2; }
+  function fallsBack(cm) {
+    if (cm.ambiguous || byLayer[cm.layer].length > 6) return true;
+    if (fullMid === null) return false;
+    var onLeft = false, onRight = false;
+    cm.positions.forEach(function (pos) {
+      var k = keyAt(board, pos[0], pos[1]);
+      if (k) { if (centre(k)[0] < fullMid) onLeft = true; else onRight = true; }
+    });
+    return onLeft && onRight;
+  }
+  function listOf(li) {
+    var list = byLayer[li] || [];
+    if (cmbMode === "badges") return list;
+    if (cmbMode === "lines") return list.filter(fallsBack);
+    return [];
+  }
+  function listLines(list, w) {
+    // an estimate: the list is laid out by the browser, this only reserves the height
+    if (!list.length) return 0;
+    var x = 0, lines = 1;
+    list.forEach(function (cm) {
+      var iw = (chars(comboLabel(cm, p.labels, km.tap_dance)) + 3) * 6.2 * s + 14 * s;
+      if (x > 0 && x + iw > w) { lines += 1; x = 0; }
+      x += iw + 10 * s;
+    });
+    return lines;
+  }
+  var resv = 0;   // px kept under the boards for combo lists or prose, the same in every quad
+  if (cmbMode) {
+    (p.resvLayers || shown).forEach(function (li) {
+      var r = 0, list = byLayer[li] || [];
+      if (cmbMode === "text") r = list.length ? list.length * 13 * s + 4 * s : 0;
+      else r = listLines(listOf(li), c[0]) * 15 * s + (listOf(li).length ? 8 * s : 0);
+      resv = Math.max(resv, r);
+    });
+    if (p.cmbQuad && cmbMode === "panel") resv = Math.max(resv, listLines(marks, c[0]) * 15 * s + 8 * s);
+  }
+
+  var u = Math.min(c[0] / bw, (c[1] - resv) / bh) * FIT;
   u = Math.min(u, MAX_PITCH * s);
   var gap = u * KEY_GAP;
   var boardW = (maxx - minx) * u, boardH = (maxy - miny) * u;
   var ox = -minx * u, oy = -miny * u;
+
+  function keyFor(pos) {
+    for (var i = 0; i < keys.length; i++) {
+      if (keys[i].matrix[0] === pos[0] && keys[i].matrix[1] === pos[1]) return keys[i];
+    }
+    return null;
+  }
+  /* A numbered marker on each trigger key, between the key's centre and its top right corner;
+     a key in several combos gets one badge holding every number, so none hides another. */
+  function cmbBadges(list) {
+    var at = {}, order = [];
+    list.forEach(function (cm) {
+      cm.positions.forEach(function (pos) {
+        var kk = pos[0] + "," + pos[1];
+        if (!at[kk]) { at[kk] = { pos: pos, ns: [] }; order.push(kk); }
+        if (at[kk].ns.indexOf(cm.n) < 0) at[kk].ns.push(cm.n);
+      });
+    });
+    var html = "";
+    order.forEach(function (kk) {
+      var k = keyFor(at[kk].pos);
+      if (!k) return;
+      var ctr = centre(k), tr = corners(k)[1];
+      var bx = ctr[0] + (tr[0] - ctr[0]) * 0.7, by = ctr[1] + (tr[1] - ctr[1]) * 0.7;
+      html += '<div class="cmb-badge" style="left:' + f1(ox + bx * u) + "px;top:" + f1(oy + by * u) + 'px">' +
+        at[kk].ns.join(" ") + "</div>";
+    });
+    return html;
+  }
+  /* Lines joining the trigger keys (through the centroid past two keys), the output in a chip. */
+  function cmbLines(list) {
+    var linesSvg = "", chips = "";
+    list.forEach(function (cm) {
+      var pts = [];
+      cm.positions.forEach(function (pos) {
+        var k = keyFor(pos);
+        if (k) { var ctr = centre(k); pts.push([ox + ctr[0] * u, oy + ctr[1] * u]); }
+      });
+      if (pts.length < 2) return;
+      var cx = 0, cy = 0;
+      pts.forEach(function (pt) { cx += pt[0]; cy += pt[1]; });
+      cx /= pts.length; cy /= pts.length;
+      if (pts.length === 2) {
+        linesSvg += '<line x1="' + f1(pts[0][0]) + '" y1="' + f1(pts[0][1]) + '" x2="' + f1(pts[1][0]) + '" y2="' + f1(pts[1][1]) + '"/>';
+      } else {
+        pts.forEach(function (pt) {
+          linesSvg += '<line x1="' + f1(pt[0]) + '" y1="' + f1(pt[1]) + '" x2="' + f1(cx) + '" y2="' + f1(cy) + '"/>';
+        });
+      }
+      chips += '<div class="cmb-chip" style="left:' + f1(cx) + "px;top:" + f1(cy) + 'px">' +
+        esc(legendWord(cm.output, p.labels, km.tap_dance)) + "</div>";
+    });
+    if (!linesSvg) return "";
+    return '<svg class="cmb-lines" xmlns="http://www.w3.org/2000/svg" width="' + f1(boardW) + '" height="' + f1(boardH) +
+      '" viewBox="0 0 ' + f1(boardW) + " " + f1(boardH) + '">' + linesSvg + "</svg>" + chips;
+  }
+  function cmbList(list) {
+    if (!list.length) return "";
+    return '<div class="cmb-list">' + list.map(function (cm) {
+      return '<span class="cmb-item"><b>' + cm.n + "</b> " + esc(comboLabel(cm, p.labels, km.tap_dance)) + "</span>";
+    }).join("") + "</div>";
+  }
 
   var quads = shown.map(function (li) {
     var name = p.names[String(li)] || "";
@@ -1019,6 +1675,7 @@ function panel(p) {
       if (!a.held) return;
       held[posKey(a.pos[0], a.pos[1])] = 1;
       if (a.pos2) held[posKey(a.pos2[0], a.pos2[1])] = 1;
+      (a.posns || []).forEach(function (pp) { held[posKey(pp[0], pp[1])] = 1; });
     });
     var keysHtml = [];
     keys.forEach(function (k) {
@@ -1038,12 +1695,50 @@ function panel(p) {
       }
       keysHtml.push(keyHtml(k, lg, u, gap, ox, oy, extra));
     });
+    var overlay = "", proseHtml = "", listHtml = "";
+    var lcs = byLayer[li] || [];
+    if (cmbMode && lcs.length) {
+      if (cmbMode === "text") {
+        proseHtml = lcs.map(function (cm) {
+          return '<div class="cmb-prose">' + esc(comboProse(cm, p.labels, km.tap_dance)) + "</div>";
+        }).join("");
+      } else if (cmbMode !== "panel") {
+        var badged = cmbMode === "lines" ? lcs.filter(fallsBack) : lcs;
+        var lined = cmbMode === "lines" ? lcs.filter(function (cm) { return !fallsBack(cm); }) : [];
+        overlay = cmbBadges(badged) + cmbLines(lined);
+        listHtml = cmbList(badged);
+      }
+    }
     return '<div class="quad" data-layer="' + li + '">' +
       '<div class="qhead"><div class="qtitle">' + titleHtml + "</div>" +
-      '<div class="qaccess">' + esc(access) + '</div><div class="drule"></div></div>' +
+      '<div class="qaccess">' + esc(access) + '</div><div class="drule"></div></div>' + proseHtml +
       '<div class="boardwrap"><div class="board" style="--u:' + f2(u) + "px;width:" + f1(boardW) + "px;" +
-      "height:" + f1(boardH) + 'px">' + keysHtml.join("") + "</div></div></div>";
+      "height:" + f1(boardH) + 'px">' + keysHtml.join("") + overlay + "</div></div>" + listHtml + "</div>";
   });
+
+  /* The dedicated combos quad: the board with only the trigger keys filled, the list beneath. */
+  if (cmbMode === "panel" && p.cmbQuad) {
+    var trigAt = {};
+    marks.forEach(function (cm) {
+      cm.positions.forEach(function (pos) { trigAt[posKey(pos[0], pos[1])] = cm; });
+    });
+    var quadKeys = [];
+    keys.forEach(function (k) {
+      var r = k.matrix[0], cc = k.matrix[1], cm = get(trigAt, posKey(r, cc), null);
+      if (cm) {
+        var lg = legend(keycodeAt(km, cm.layer, r, cc), p.labels, km.tap_dance) || L();
+        quadKeys.push(keyHtml(k, L(lg.text, lg.span, "held"), u, gap, ox, oy));
+      } else {
+        quadKeys.push(keyHtml(k, L(""), u, gap, ox, oy));
+      }
+    });
+    quads.push('<div class="quad" data-layer="combos">' +
+      '<div class="qhead"><div class="qtitle"><span class="no">Combos</span></div>' +
+      '<div class="qaccess">Press the marked keys together</div><div class="drule"></div></div>' +
+      '<div class="boardwrap"><div class="board" style="--u:' + f2(u) + "px;width:" + f1(boardW) + "px;" +
+      "height:" + f1(boardH) + 'px">' + quadKeys.join("") + cmbBadges(marks) + "</div></div>" +
+      cmbList(marks) + "</div>");
+  }
 
   var sep = ' <span class="sep">·</span> ';
   var bits = [esc(board.name)];
@@ -1085,7 +1780,8 @@ function documentHtml(styleCss, title, styleName, width, height, panels, dual) {
 
    opts: width, height (1920 x 1080), layers (indexes to draw; default the non-empty ones),
    names ({"1": "Nav"}), title (default the file's stem), labels ({keycode: words}), date,
-   styleName, note, dual, halves.
+   styleName, note, dual, halves, combos ("badges" | "lines" | "panel" | "text" | "off";
+   default badges, drawn only when the file has combos).
 
    A sheet is one screen holding up to nine layers. With `dual` it is two screens wide: two
    panels side by side, the layers shared between them, so a wallpaper can span two monitors
@@ -1103,7 +1799,11 @@ function renderPages(km, board, styleCss, opts) {
   var shown = wanted.filter(function (i) { return i >= 0 && i < km.layers.length; });
   if (!shown.length) shown = [0];
   var title = opts.title != null ? opts.title : (km.stem != null ? km.stem : stemOf(km.name));
-  var acc = accesses(km);
+  var cmbMode = opts.combos == null ? "badges" : opts.combos;
+  if (["badges", "lines", "panel", "text"].indexOf(cmbMode) < 0) cmbMode = "";
+  var marks = cmbMode ? comboMarks(km, board) : [];
+  if (!marks.length) cmbMode = "";
+  var acc = accesses(km, marks);
   var halvesMode = !!opts.halves, dual = !!opts.dual || halvesMode;
 
   var perSheet = LAYERS_PER_PAGE * (dual && !halvesMode ? 2 : 1);
@@ -1111,25 +1811,28 @@ function renderPages(km, board, styleCss, opts) {
   for (var i = 0; i < shown.length; i += perSheet) sheets.push(shown.slice(i, i + perSheet));
   var docs = [];
   sheets.forEach(function (sheet, si) {
+    var cmbQuad = cmbMode === "panel" && si === sheets.length - 1;   // the combos quad joins the last sheet
     function common(extra) {
       var p = {km: km, board: board, acc: acc, names: names, labels: labels, title: title, width: width,
                height: height, date: opts.date || "", note: opts.note || "", sheetCount: sheets.length,
-               sheetNo: si + 1, fit: null, cells: null, side: ""};
+               sheetNo: si + 1, fit: null, cells: null, side: "",
+               cmbMode: cmbMode, cmbMarks: marks, resvLayers: sheet, cmbQuad: false};
       Object.keys(extra).forEach(function (k) { p[k] = extra[k]; });
       return p;
     }
     var panels;
     if (halvesMode) {
       var lr = halves(board), fit = fitSize(lr);
-      panels = [panel(common({keys: lr[0], shown: sheet, fit: fit, side: "left"})),
-                panel(common({keys: lr[1], shown: sheet, fit: fit, side: "right"}))];
+      panels = [panel(common({keys: lr[0], shown: sheet, fit: fit, side: "left", cmbQuad: cmbQuad})),
+                panel(common({keys: lr[1], shown: sheet, fit: fit, side: "right", cmbQuad: cmbQuad}))];
     } else if (dual) {
       var nLeft = Math.ceil(sheet.length / 2);
-      var cellCount = Math.max(nLeft, sheet.length - nLeft);   // the same grid on both screens keeps the keys one size
+      // the same grid on both screens keeps the keys one size
+      var cellCount = Math.max(nLeft, sheet.length - nLeft + (cmbQuad ? 1 : 0));
       panels = [panel(common({keys: board.keys, shown: sheet.slice(0, nLeft), cells: cellCount, side: "left"})),
-                panel(common({keys: board.keys, shown: sheet.slice(nLeft), cells: cellCount, side: "right"}))];
+                panel(common({keys: board.keys, shown: sheet.slice(nLeft), cells: cellCount, side: "right", cmbQuad: cmbQuad}))];
     } else {
-      panels = [panel(common({keys: board.keys, shown: sheet}))];
+      panels = [panel(common({keys: board.keys, shown: sheet, cmbQuad: cmbQuad}))];
     }
     docs.push(documentHtml(styleCss, title, opts.styleName || "", width, height, panels, dual));
   });
@@ -1378,7 +2081,7 @@ function namedLayers(codes, positions, protocol) {
 
 /* ---- exports ------------------------------------------------------------------------------- */
 
-vilimg.version = "1.1.1";
+vilimg.version = "1.2.0";
 vilimg.parseKeymap = parseKeymap;
 vilimg.isKeymapJson = isKeymapJson;
 vilimg.positions = positions;
@@ -1409,6 +2112,10 @@ vilimg.legend = legend;
 vilimg.parseCall = parseCall;
 vilimg.layerTarget = layerTarget;
 vilimg.accesses = accesses;
+vilimg.comboEntries = comboEntries;
+vilimg.comboMarks = comboMarks;
+vilimg.comboLabel = comboLabel;
+vilimg.comboProse = comboProse;
 vilimg.centre = centre;
 vilimg.isSplit = isSplit;
 vilimg.halves = halves;
@@ -1427,6 +2134,11 @@ vilimg.setKeycodes = setKeycodes;
 vilimg.keycodeName = keycodeName;
 vilimg.normaliseCode = normaliseCode;
 vilimg.normaliseKeymap = normaliseKeymap;
+vilimg.parseZmkKeymap = parseZmkKeymap;
+vilimg.zmkCode = zmkCode;
+vilimg.zmkLayouts = zmkLayouts;
+vilimg.matrixFromGeometry = matrixFromGeometry;
+vilimg.boardFromZmkLayout = boardFromZmkLayout;
 vilimg.decodeBuffer = decodeBuffer;
 vilimg.namedLayers = namedLayers;
 vilimg.LAYERS_PER_PAGE = LAYERS_PER_PAGE;

@@ -42,6 +42,27 @@ body.dual .page { position:absolute; top:0; overflow:hidden; background:inherit;
 .key.held .sub, .key.layerkey .sub { color:var(--held-ink, var(--acc, #111111)); }
 .key.layerkey .sub { color:var(--acc, #111111); }
 
+/* combos: numbered badges on the trigger keys, connector lines with an output chip, the
+   legend list under a board, and the prose line of the text treatment. All coloured from
+   the same tokens every style already sets, so they work in every style untouched. */
+.cmb-badge { position:absolute; transform:translate(-50%,-50%); min-width:calc(var(--u) * 0.34); height:calc(var(--u) * 0.34);
+  box-sizing:border-box; padding:0 calc(var(--u) * 0.05); border-radius:calc(var(--u) * 0.17);
+  background:var(--heldbg, #111111); border:1px solid var(--acc, #111111);
+  color:var(--held-ink, var(--acc, #ffffff)); font-family:var(--font-label, monospace); font-size:calc(var(--u) * 0.16);
+  display:flex; align-items:center; justify-content:center; line-height:1; white-space:nowrap; }
+.cmb-lines { position:absolute; left:0; top:0; pointer-events:none; }
+.cmb-lines line { stroke:var(--acc, #111111); stroke-width:calc(var(--u) * 0.03); opacity:0.8; }
+.cmb-chip { position:absolute; transform:translate(-50%,-50%); background:var(--card, #ffffff);
+  border:1px solid var(--acc, #111111); border-radius:calc(var(--u) * 0.08); padding:calc(var(--u) * 0.03) calc(var(--u) * 0.09);
+  color:var(--acc, #111111); font-family:var(--font-word, system-ui, sans-serif); font-weight:600;
+  font-size:calc(var(--u) * 0.14); white-space:nowrap; }
+.cmb-list { margin-top:calc(4px * var(--s)); display:flex; flex-wrap:wrap; justify-content:center;
+  column-gap:calc(14px * var(--s)); row-gap:calc(2px * var(--s)); font-family:var(--font-label, monospace);
+  font-size:calc(10px * var(--s)); letter-spacing:0.08em; color:var(--sec, #666666); text-transform:uppercase; }
+.cmb-list b { color:var(--acc, #111111); font-weight:600; }
+.cmb-prose { font-family:var(--font-label, monospace); font-size:calc(9px * var(--s)); letter-spacing:0.15em;
+  color:var(--sec, #666666); text-transform:uppercase; margin-top:calc(3px * var(--s)); }
+
 .mapping { position:absolute; left:var(--pad-x); bottom:calc(9px * var(--s)); z-index:2;
   font-family:var(--font-label, monospace); font-size:calc(11px * var(--s)); letter-spacing:0.18em;
   color:var(--acc, #111111); text-transform:uppercase; }

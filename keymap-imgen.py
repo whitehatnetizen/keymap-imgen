@@ -13,8 +13,8 @@ rendered (then the current folder, if keymaps/ is empty). Pictures go to output/
 renderer is docs/vilimg.js, shared with the web page, and the command runs it there.
 
 A settings file <stem>.settings.json beside a keymap stores title, board, layout,
-layers, names and labels for it; index.html writes one. Command-line options
-override it.
+layers, names, labels and the combos treatment for it; index.html writes one.
+Command-line options override it.
 """
 
 import argparse
@@ -103,7 +103,7 @@ def parse_layers(s):
 
 
 def _is_keymap_file(p):
-    if p.suffix.lower() == ".vil":
+    if p.suffix.lower() in (".vil", ".keymap"):
         return True
     if p.suffix.lower() != ".json" or p.name.endswith(".settings.json"):
         return False
@@ -128,12 +128,15 @@ def _clean_settings(data, name):
         warn(f"{name}: expected a JSON object, ignored")
         return {}
     out = {}
-    for key in ("title", "board", "layout"):
+    for key in ("title", "board", "layout", "combos"):
         if key in data:
             if isinstance(data[key], str):
                 out[key] = data[key]
             else:
                 warn(f"{name}: '{key}' should be text, ignored")
+    if out.get("combos") not in (None, "badges", "lines", "panel", "text", "off"):
+        warn(f"{name}: 'combos' should be badges, lines, panel, text or off, ignored")
+        del out["combos"]
     if "layers" in data:
         try:
             out["layers"] = [int(x) for x in data["layers"]]
@@ -164,7 +167,9 @@ def read_settings(path):
 def version_string():
     meta = geometry.index_meta()
     idx = f"QMK index {meta['built']} ({meta.get('count')} keyboards)" if meta.get("built") else "no QMK index"
-    return f"Keymap Image Generator {__version__}, {idx}"
+    zmeta = geometry.zmk_index_meta()
+    zidx = f", ZMK index {zmeta['built']} ({zmeta.get('count')} keyboards)" if zmeta.get("built") else ""
+    return f"Keymap Image Generator {__version__}, {idx}{zidx}"
 
 
 class _VersionAction(argparse.Action):
@@ -254,10 +259,11 @@ def render_km(km, det, side, job, out_stem):
         warn(f"{f.name}: {det.board.name} is not a split keyboard, so its halves cannot go on separate "
              f"screens; drawing whole layers across both screens instead")
         halves = False
+    combos = args.combos or side.get("combos") or "badges"
     pages = browser.render_pages(km, det.board, job.style_css, width=job.width, height=job.height,
                                  layers=shown, names=names, title=title, labels=labels,
                                  date=job.today, style_name=job.style, note="; ".join(footer_notes),
-                                 dual=dual, halves=halves)
+                                 dual=dual, halves=halves, combos=combos)
     for i, page_html in enumerate(pages):
         suffix = f".{i + 1}" if len(pages) > 1 else ""
         out_html = job.out_dir / f"{out_stem}.{job.style}{suffix}.html"
@@ -283,6 +289,15 @@ def cmd_list_boards(term):
         print("Board files in boards/:")
         for b in hand:
             print(f"  {b.slug:<14} {b.name}: {len(b.keys)} keys, matrix {b.matrix[0]}x{b.matrix[1]}")
+    zmk_hits = geometry.search_zmk_index(term or "")
+    if zmk_hits:
+        label = f"matching {term!r}" if term else "in the ZMK index"
+        print(f"\n{len(zmk_hits)} ZMK keyboards {label}:")
+        for name, disp, layouts in zmk_hits[:20]:
+            lay = ", ".join(f"{ln} ({n})" for ln, n in sorted(layouts.items()))
+            print(f"  {name:<32} {disp}: {lay}")
+        if len(zmk_hits) > 20:
+            print(f"  and {len(zmk_hits) - 20} more; add more of the name to narrow the search")
     hits = geometry.search_index(term or "")
     if not geometry.load_index():
         print("No QMK index present (boards/qmk-index.json.gz); run tools/build_qmk_index.py to create it.")
@@ -415,6 +430,10 @@ def main(argv=None):
     ap.add_argument("--split-halves", "--halves", action="store_true",
                     help="with --dual-monitor (implied): every layer on both screens, the left half of a "
                          "split keyboard on the left screen and the right half on the right, drawn larger")
+    ap.add_argument("--combos", choices=["badges", "lines", "panel", "text", "off"],
+                    help="how combos (several keys pressed together producing another key) are drawn: "
+                         "badges (numbered markers plus a list, the default), lines (joining the keys), "
+                         "panel (their own extra quad), text (a line of prose per combo), or off")
     ap.add_argument("--from-usb", action="store_true",
                     help="read the connected Vial keyboard's own layout definition; with a style name as well, render afterwards")
     ap.add_argument("--save-board", metavar="NAME", help="with --from-usb: save the definition as boards/NAME.json")

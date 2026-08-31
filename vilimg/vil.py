@@ -1,4 +1,4 @@
-"""Load a keymap file: a Vial .vil or a QMK keymap.json.
+"""Load a keymap file: a Vial .vil, a QMK keymap.json or a ZMK .keymap.
 
 A .vil is JSON whose "layout" is a list of layers, each a list of matrix rows, each a
 list of keycode strings; -1 marks a matrix position with no physical key. Keycodes are
@@ -9,17 +9,25 @@ LAYOUT macro name) and "layers": lists of keycodes in LAYOUT order, i.e. the sam
 as the keys in that layout's definition. It carries no matrix arrays; they are built once
 the board geometry is known (see `Keymap.resolve_positional`).
 
-Everything else in either file (macros, combos, encoders, settings) is kept on the object
-but not drawn; the tap-dance table and the Vial protocol version go to the renderer, which
-prints a tap dance's actions and reads bare-number keycodes under that version.
+A ZMK .keymap is devicetree text (see vilimg/zmk.py): positional like a QMK keymap.json,
+but the layers hold raw ZMK binding strings ("&kp A", "&lt 2 SPACE"), which the renderer
+translates to QMK spellings at normalise time. Its combos name keys by position.
+
+Everything else in either file (macros, encoders, settings) is kept on the object but not
+drawn; the tap-dance table, the combo slots and the Vial protocol version go to the
+renderer, which prints a tap dance's actions, draws the combos and reads bare-number
+keycodes under that version.
 """
 
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from . import zmk
+
 EMPTY_CODES = {"KC_NO", "KC_TRNS", -1, "KC_TRANSPARENT",
-               "_______", "XXXXXXX"}   # QMK's keymap.json spellings of KC_TRNS and KC_NO
+               "_______", "XXXXXXX",   # QMK's keymap.json spellings of KC_TRNS and KC_NO
+               "&trans", "&none"}      # the same two in a ZMK keymap
 
 
 @dataclass
@@ -62,12 +70,16 @@ class Keymap:
         """
         protocol = self.extra.get("vial_protocol")
         td = self.extra.get("tap_dance")
+        cmb = self.extra.get("combo")
+        beh = self.extra.get("zmk_behaviors")
         return {"name": self.path.name, "stem": self.path.stem, "kind": self.kind,
                 "uid": None if self.uid is None else str(self.uid),
                 "layers": self.layers, "positional": self.positional,
                 "layer_names": {str(k): v for k, v in self.layer_names.items()},
                 "vial_protocol": protocol if isinstance(protocol, int) else None,
-                "tap_dance": td if isinstance(td, list) else []}
+                "tap_dance": td if isinstance(td, list) else [],
+                "combo": cmb if isinstance(cmb, list) else [],
+                "zmk_behaviors": beh if isinstance(beh, dict) else {}}
 
     def positions(self):
         """Matrix positions that hold a physical key, from layer 0."""
@@ -87,7 +99,9 @@ class Keymap:
         return out
 
     def resolve_positional(self, board):
-        """Build matrix arrays for a positional (qmk) keymap from a board's key order."""
+        """Build matrix arrays for a positional (qmk or zmk) keymap from a board's key
+        order; a ZMK keymap counts the board's keys in visual reading order (rows top to
+        bottom, left to right), whatever order the board file has."""
         if self.positional is None:
             return
         n = len(board.keys)
@@ -95,13 +109,23 @@ class Keymap:
         cols = max((k.matrix[1] for k in board.keys), default=-1) + 1
         if board.matrix and board.matrix[0] and board.matrix[1]:
             rows, cols = max(rows, board.matrix[0]), max(cols, board.matrix[1])
+        keys = board.keys
+        if self.kind == "zmk" and not getattr(board, "zmk_order", False):
+            # a foreign board (hand file, QMK layout, USB read): assume ZMK counts its keys
+            # in visual reading order; a board from a ZMK layout keeps its own exact order
+            pairs = zmk.matrix_from_geometry(
+                [{"x": k.x, "y": k.y, "w": k.w, "h": k.h, "r": k.r, "rx": k.rx, "ry": k.ry}
+                 for k in keys])
+            keys = [k for _, k in sorted(zip(pairs, keys), key=lambda t: t[0])]
         self.layers = []
         for layer in self.positional:
             grid = [[-1] * cols for _ in range(rows)]
-            for i, key in enumerate(board.keys):
+            for i, key in enumerate(keys):
                 r, c = key.matrix
                 grid[r][c] = layer[i] if i < len(layer) else "KC_NO"
             self.layers.append(grid)
+        # resolve may run more than once: replace any earlier size warning rather than stacking copies
+        self.warnings = [w for w in self.warnings if " keycodes but the layout " not in w]
         if any(len(layer) != n for layer in self.positional):
             counts = sorted({len(layer) for layer in self.positional})
             self.warnings.append(f"{self.path.name}: layers have {counts} keycodes but the layout "
@@ -112,7 +136,8 @@ def is_keymap_json(data):
     return isinstance(data, dict) and isinstance(data.get("layers"), list) and "keyboard" in data
 
 
-EXPORT_HINT = ("Export one from Vial (File, Save current layout) or from QMK Configurator (Export keymap)")
+EXPORT_HINT = ("Export one from Vial (File, Save current layout) or from QMK Configurator "
+               "(Export keymap), or take the .keymap file from a ZMK config")
 
 
 def load(path):
@@ -130,6 +155,12 @@ def load(path):
     try:
         data = json.loads(text)
     except json.JSONDecodeError as e:
+        if zmk.looks_like_keymap(text):
+            parsed = zmk.parse_keymap(text, path.name)
+            return Keymap(path=path, kind="zmk", positional=parsed["layers"],
+                          layer_names=parsed["layer_names"],
+                          extra={"combo": parsed["combos"], "zmk_behaviors": parsed["behaviors"]},
+                          warnings=parsed["warnings"])
         raise ValueError(f"{path.name}: not valid JSON ({e}). {EXPORT_HINT} and try again") from None
     if not isinstance(data, dict):
         raise ValueError(f"{path.name}: expected a JSON object")
@@ -158,6 +189,7 @@ def load(path):
     if settings_like:
         raise ValueError(f"{path.name} looks like a settings file; give the keymap it belongs to "
                          f"(the settings are read from beside it)")
-    raise ValueError(f"{path.name}: neither a Vial .vil ('layout' list of layers) nor a QMK "
-                     f"keymap.json ('keyboard' and 'layers'). {EXPORT_HINT} and try again")
+    raise ValueError(f"{path.name}: neither a Vial .vil ('layout' list of layers), a QMK "
+                     f"keymap.json ('keyboard' and 'layers') nor a ZMK .keymap (a zmk,keymap "
+                     f"node). {EXPORT_HINT} and try again")
 

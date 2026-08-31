@@ -94,7 +94,8 @@ class Browser:
         return self.run("return v.gridMode(window.QMK_INDEX.boards, a[0]);", [list(m) for m in matches])
 
     def render_pages(self, km, board, style_css, *, width=1920, height=1080, layers=None, names=None,
-                     title=None, labels=None, date="", style_name="", note="", dual=False, halves=False):
+                     title=None, labels=None, date="", style_name="", note="", dual=False, halves=False,
+                     combos="badges"):
         """The HTML documents for a keymap on a board in a style, one string per sheet.
 
         Same contract as vilimg.renderPages: a sheet is one screen of up to nine layers; with
@@ -104,7 +105,7 @@ class Browser:
         """
         opts = {"width": width, "height": height, "layers": layers, "names": names or {}, "title": title,
                 "labels": labels or {}, "date": date, "styleName": style_name, "note": note,
-                "dual": dual, "halves": halves}
+                "dual": dual, "halves": halves, "combos": combos}
         return self.call("renderPages", _data(km), _data(board), style_css, opts)
 
     def is_split(self, board):
