@@ -1,0 +1,49 @@
+/* Nuclear Console light: the same keys on the grey-green enamel of a control-room panel. */
+@font-face { font-family:'Barlow'; src:url('fonts/Barlow-500-normal.woff2') format('woff2'); font-weight:500; }
+@font-face { font-family:'Barlow'; src:url('fonts/Barlow-700-normal.woff2') format('woff2'); font-weight:700; }
+@font-face { font-family:'Share Tech Mono'; src:url('fonts/ShareTechMono-400-normal.woff2') format('woff2'); font-weight:400; }
+
+:root {
+  --desk:#c9d2c3; --desk-deep:#b9c3b2; --panel-ink:#1f2a30; --panel-dim:#4e5d57; --slate:#35434e; --slate-edge:#4b5c69; --black:#262626; --black-edge:#3a3a3a;
+  --cyan:#8cd4e4; --cyan-dim:#6d9fac; --amber:#f2a233; --amber-deep:#b8761a; --scram:#f13634;
+  --bg:var(--desk); --card:var(--slate); --ink:var(--cyan); --sec:var(--amber); --line:var(--slate-edge);
+  --acc:var(--amber); --brass:var(--amber); --heldbg:var(--amber); --held-ink:var(--black);
+  --font-title:'Barlow', system-ui, sans-serif;
+  --font-word:'Barlow', system-ui, sans-serif;
+  --font-legend:'Share Tech Mono', monospace;
+  --font-label:'Share Tech Mono', monospace;
+}
+
+body { background:
+  repeating-linear-gradient(0deg, rgba(0,0,0,0.025) 0 1px, transparent 1px 4px),
+  linear-gradient(180deg, var(--desk) 0%, var(--desk-deep) 100%); }
+
+.qtitle { font-weight:700; font-size:calc(22px * var(--s)); letter-spacing:0.06em; text-transform:uppercase; color:var(--panel-ink); }
+.qtitle .no { font-family:'Share Tech Mono', monospace; font-size:calc(13px * var(--s)); letter-spacing:0.12em; color:#a4600d; vertical-align:middle; }
+.qtitle .dot { color:var(--panel-dim); }
+.qaccess { color:var(--panel-dim); letter-spacing:0.16em; }
+/* hazard stripes under each header */
+.drule { height:calc(5px * var(--s)); border:0; margin-top:calc(8px * var(--s)); opacity:1;
+  background:repeating-linear-gradient(135deg, var(--amber) 0 calc(6px * var(--s)), var(--black) calc(6px * var(--s)) calc(12px * var(--s))); }
+
+.key { border-radius:calc(var(--u) * 0.08); border:1px solid var(--slate-edge); background:linear-gradient(180deg, #3b4a56 0%, var(--slate) 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.08), 0 2px 0 #7f8a7a; }
+.key .lg { font-size:calc(var(--u) * 0.3); }
+.key .word { font-weight:700; font-size:calc(var(--u) * 0.155); letter-spacing:0.06em; text-transform:uppercase; }
+.key .sub { color:var(--cyan-dim); }
+.key.mod { background:linear-gradient(180deg, #2e2e2e 0%, var(--black) 100%); border-color:var(--black-edge); }
+.key.mod .lg, .key.mod .word, .key.mod .combo, .key.mod .tag { color:var(--amber); }
+/* the layer key: black cap, amber rim, a red lamp in the corner */
+.key.layerkey { background:linear-gradient(180deg, #2e2e2e 0%, var(--black) 100%); border:1px solid var(--amber); box-shadow:inset 0 0 0 1px var(--amber-deep), 0 2px 0 #0b0e10; }
+.key.layerkey .lg, .key.layerkey .word, .key.layerkey .sub { color:var(--amber); }
+.key.layerkey::after { content:""; position:absolute; top:calc(var(--u) * 0.08); right:calc(var(--u) * 0.08); width:calc(var(--u) * 0.1); height:calc(var(--u) * 0.1);
+  border-radius:50%; background:var(--scram); box-shadow:0 0 calc(var(--u) * 0.08) rgba(241,54,52,0.7); }
+.key.held { background:var(--amber); border-color:var(--amber-deep); box-shadow:0 2px 0 var(--amber-deep); }
+.key.held .word, .key.held .lg, .key.held .sub { color:var(--black); }
+.key.trns { opacity:1; background:transparent; border:1px dashed #7d8b83; box-shadow:none; }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:#56655f; }
+.key.dead { opacity:1; background:transparent; border:1px dotted #7d8b83; box-shadow:none; }
+
+.mapping { font-weight:700; color:#c8201e; letter-spacing:0.24em; }
+.footer { color:var(--panel-dim); }
+.footer .sep { color:#a4600d; }

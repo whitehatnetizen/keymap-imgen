@@ -9,7 +9,7 @@ the shape of every keyboard in QMK's public data (3,753 boards) and of the ZMK b
 that publish physical layouts, and can read a Vial keyboard's own shape and keymap over
 USB for clones and one-offs. Combos (keys pressed together that give another key) are
 drawn in your choice of four ways. Output is an HTML page per keymap and a 4K PNG for a
-wallpaper or a forum post, in any of 33 styles.
+wallpaper or a forum post, in any of 45 styles.
 
 ## See it
 
@@ -236,21 +236,24 @@ the page draws nothing.
 
 A style is one CSS file in `styles/`; `--list` shows them with a one-line description.
 `plain` is the printer-friendly reference card (thick outlines, no fills, no webfonts),
-with `plain_cream` (the same card on a warm paper tint) and `plain_ink` (its outlines and
-titles in a deep blue) beside it, and `sage` the same card in a dusty green; the other
-styles come in pairs, a dark and a light version of each look.
+with four variants of the same card: `plain_cream` (a warm paper tint), `plain_ink` (outlines
+and titles in a deep blue), `sage` (a dusty green) and `sage_dark` (the card inverted).
+`high_contrast` and `high_contrast_dark` are for reading at a distance or with low vision:
+pure black and white, the largest legends, and layer keys marked by a corner flag and a
+double outline rather than by colour. The other styles come in pairs, a dark and a light
+version of each look.
 
-| `plain` | |
-|---|---|
-| ![plain](docs/gallery/plain.webp) | |
+The printer card and its variants:
 
-| `plain_cream` | `plain_ink` |
-|---|---|
-| ![plain_cream](docs/gallery/plain_cream.webp) | ![plain_ink](docs/gallery/plain_ink.webp) |
+| `plain` | `plain_cream` | `plain_ink` |
+|---|---|---|
+| ![plain](docs/gallery/plain.webp) | ![plain_cream](docs/gallery/plain_cream.webp) | ![plain_ink](docs/gallery/plain_ink.webp) |
+| `sage` | `sage_dark` | |
+| ![sage](docs/gallery/sage.webp) | ![sage_dark](docs/gallery/sage_dark.webp) | |
 
-| `sage` | `sage_dark` |
+| `high_contrast` | `high_contrast_dark` |
 |---|---|
-| ![sage](docs/gallery/sage.webp) | ![sage_dark](docs/gallery/sage_dark.webp) |
+| ![high_contrast](docs/gallery/high_contrast.webp) | ![high_contrast_dark](docs/gallery/high_contrast_dark.webp) |
 
 | `paper` | `paper_dark` |
 |---|---|
@@ -296,6 +299,22 @@ styles come in pairs, a dark and a light version of each look.
 |---|---|
 | ![catppuccin](docs/gallery/catppuccin.webp) | ![catppuccin_light](docs/gallery/catppuccin_light.webp) |
 
+| `gruvbox` | `gruvbox_light` |
+|---|---|
+| ![gruvbox](docs/gallery/gruvbox.webp) | ![gruvbox_light](docs/gallery/gruvbox_light.webp) |
+
+| `nord` | `nord_light` |
+|---|---|
+| ![nord](docs/gallery/nord.webp) | ![nord_light](docs/gallery/nord_light.webp) |
+
+| `dracula` | `dracula_light` |
+|---|---|
+| ![dracula](docs/gallery/dracula.webp) | ![dracula_light](docs/gallery/dracula_light.webp) |
+
+| `tokyonight` | `tokyonight_light` |
+|---|---|
+| ![tokyonight](docs/gallery/tokyonight.webp) | ![tokyonight_light](docs/gallery/tokyonight_light.webp) |
+
 | `bubblegum` | `bubblegum_light` |
 |---|---|
 | ![bubblegum](docs/gallery/bubblegum.webp) | ![bubblegum_light](docs/gallery/bubblegum_light.webp) |
@@ -307,6 +326,10 @@ styles come in pairs, a dark and a light version of each look.
 | `sakura` | `sakura_dark` |
 |---|---|
 | ![sakura](docs/gallery/sakura.webp) | ![sakura_dark](docs/gallery/sakura_dark.webp) |
+
+| `nuclear` | `nuclear_light` |
+|---|---|
+| ![nuclear](docs/gallery/nuclear.webp) | ![nuclear_light](docs/gallery/nuclear_light.webp) |
 
 ### Your own style
 

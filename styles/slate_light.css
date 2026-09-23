@@ -4,7 +4,7 @@
 
 :root {
   --stone:#e4e6e3; --stone-deep:#d8dbd7; --chalk:#f6f7f4; --ink-dark:#2a2e31; --ink-dim:#6b7176; --ochre:#9a7420; --ochre-deep:#7d5d17;
-  --bg:var(--stone); --card:var(--chalk); --ink:var(--ink-dark); --sec:var(--ink-dim); --line:#b4b9bc;
+  --bg:var(--stone); --card:var(--chalk); --ink:var(--ink-dark); --sec:var(--ink-dim); --line:#a2a8ac;
   --acc:var(--ochre); --brass:var(--ochre); --heldbg:var(--ochre); --held-ink:#fbf6ea;
   --font-title:'Libre Franklin', system-ui, sans-serif;
   --font-word:'Libre Franklin', system-ui, sans-serif;
@@ -32,9 +32,9 @@ body { background:linear-gradient(180deg, var(--stone) 0%, var(--stone-deep) 100
 .key.layerkey .lg, .key.layerkey .word { color:var(--ochre); }
 .key.held { background:var(--ochre); border-color:var(--ochre-deep); }
 .key.held .word, .key.held .lg, .key.held .sub { color:var(--held-ink); }
-.key.trns { opacity:1; background:transparent; border:1px dashed #c3c7c9; }
-.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:#9aa0a4; }
-.key.dead { opacity:1; background:transparent; border:1px dotted #c3c7c9; }
+.key.trns { opacity:1; background:transparent; border:1px dashed #adb2b5; }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:#848a8f; }
+.key.dead { opacity:1; background:transparent; border:1px dotted #adb2b5; }
 .key .sub { color:var(--ink-dim); }
 .key.layerkey .sub { color:var(--ochre); }
 

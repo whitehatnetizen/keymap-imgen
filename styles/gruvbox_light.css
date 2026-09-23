@@ -1,0 +1,40 @@
+/* Gruvbox light: the same retro groove on its cream side, dark brown ink, burnt-orange layers. */
+@font-face { font-family:'IBM Plex Sans'; src:url('fonts/IBMPlexSans-variable-normal.woff2') format('woff2'); font-weight:100 700; }
+@font-face { font-family:'Source Code Pro'; src:url('fonts/SourceCodePro-variable-normal.woff2') format('woff2'); font-weight:200 900; }
+
+:root {
+  --bg0h:#f9f5d7; --bg0:#fbf1c7; --bg1:#ebdbb2; --bg2:#d5c4a1; --bg3:#bdae93; --fg:#3c3836; --fg4:#7c6f64; --gray:#928374; --orange:#af3a03; --yellow:#b57614; --aqua:#427b58; --red:#9d0006;
+  --bg:var(--bg0); --card:var(--bg0h); --ink:var(--fg); --sec:var(--fg4); --line:var(--bg3);
+  --acc:var(--orange); --brass:var(--yellow); --heldbg:var(--orange); --held-ink:var(--bg0h);
+  --font-title:'IBM Plex Sans', system-ui, sans-serif;
+  --font-word:'IBM Plex Sans', system-ui, sans-serif;
+  --font-legend:'Source Code Pro', monospace;
+  --font-label:'Source Code Pro', monospace;
+}
+
+body { background:linear-gradient(180deg, var(--bg0) 0%, #f2e5bc 100%); }
+
+.qtitle { font-weight:700; font-size:calc(21px * var(--s)); color:var(--ink); }
+.qtitle .no { font-family:'Source Code Pro', monospace; font-weight:500; font-size:calc(12px * var(--s)); letter-spacing:0.12em; color:var(--brass); vertical-align:middle; }
+.qtitle .dot { color:var(--bg3); }
+.qaccess { color:var(--sec); letter-spacing:0.14em; }
+.drule { height:calc(3px * var(--s)); border:0; margin-top:calc(8px * var(--s)); opacity:1; background:linear-gradient(90deg, var(--red), var(--orange) 35%, var(--yellow) 70%, var(--aqua)); }
+
+.key { border-radius:calc(var(--u) * 0.08); border:1px solid var(--line); background:var(--card); box-shadow:0 2px 0 var(--bg2); }
+.key .lg { font-weight:500; font-size:calc(var(--u) * 0.27); }
+.key .word { font-weight:600; font-size:calc(var(--u) * 0.155); }
+.key.mod { background:var(--bg1); }
+.key.mod .lg, .key.mod .word, .key.mod .combo, .key.mod .tag { color:var(--sec); }
+.key.layerkey { border-color:var(--acc); box-shadow:inset 0 0 0 1px var(--acc), 0 2px 0 var(--bg2); }
+.key.layerkey .lg, .key.layerkey .word { color:var(--acc); }
+.key.held { background:var(--acc); border-color:var(--acc); box-shadow:0 2px 0 #7a2902; }
+.key.held .word, .key.held .lg, .key.held .sub { color:var(--held-ink); }
+.key.trns { opacity:1; background:transparent; border:1px dashed #a89984; box-shadow:none; }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:#857869; }
+.key.dead { opacity:1; background:transparent; border:1px dotted #a89984; box-shadow:none; }
+.key .sub { font-weight:600; color:var(--aqua); }
+.key.layerkey .sub { color:var(--acc); }
+
+.mapping { font-weight:600; color:var(--orange); letter-spacing:0.2em; }
+.footer { color:var(--sec); }
+.footer .sep { color:var(--brass); }

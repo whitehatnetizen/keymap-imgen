@@ -2081,7 +2081,7 @@ function namedLayers(codes, positions, protocol) {
 
 /* ---- exports ------------------------------------------------------------------------------- */
 
-vilimg.version = "1.2.0";
+vilimg.version = "1.3.0";
 vilimg.parseKeymap = parseKeymap;
 vilimg.isKeymapJson = isKeymapJson;
 vilimg.positions = positions;

@@ -1,0 +1,46 @@
+/* Dracula light: a letter from the castle; cream laid paper, iron-gall ink keys, wax-seal red layers, blackletter headers. */
+@font-face { font-family:'Pirata One'; src:url('fonts/PirataOne-400-normal.woff2') format('woff2'); font-weight:400; }
+@font-face { font-family:'Newsreader'; src:url('fonts/Newsreader-variable-normal.woff2') format('woff2'); font-weight:200 800; }
+@font-face { font-family:'Fragment Mono'; src:url('fonts/FragmentMono-400-normal.woff2') format('woff2'); font-weight:400; }
+
+:root {
+  --paper:#f3ead6; --paper-deep:#e8dcc0; --ink:#231a17; --ink-soft:#5b4a40; --ink-faint:#8c7a68;
+  --wax:#8e1520; --wax-deep:#5c0c13; --rule:#b9a584;
+  --bg:var(--paper); --card:#faf4e6; --sec:var(--ink-soft); --line:#a8957a;
+  --acc:var(--wax); --brass:var(--wax); --heldbg:var(--wax); --held-ink:#fbf1e1;
+  --font-title:'Pirata One', 'Newsreader', Georgia, serif;
+  --font-word:'Newsreader', Georgia, serif;
+  --font-legend:'Newsreader', Georgia, serif;
+  --font-label:'Fragment Mono', monospace;
+}
+
+/* laid paper: faint chain lines, a warmer edge */
+body { background:
+  repeating-linear-gradient(90deg, rgba(120,95,60,0.05) 0 1px, transparent 1px calc(28px * var(--s))),
+  radial-gradient(ellipse 85% 80% at 50% 45%, var(--paper) 55%, var(--paper-deep) 100%); }
+
+.qtitle { font-weight:400; font-size:calc(30px * var(--s)); letter-spacing:0.01em; color:var(--ink); }
+.qtitle .no { font-family:'Fragment Mono', monospace; font-size:calc(11px * var(--s)); letter-spacing:0.16em; text-transform:uppercase; color:var(--wax); vertical-align:middle; }
+.qtitle .dot { color:var(--wax); }
+.qaccess { color:var(--ink-soft); letter-spacing:0.16em; }
+.drule { height:calc(4px * var(--s)); border:0; border-top:1.5px solid var(--ink); border-bottom:0.5px solid var(--ink); margin-top:calc(6px * var(--s)); opacity:0.85; }
+
+.key { border-radius:calc(var(--u) * 0.06); border:1px solid var(--line); background:var(--card); box-shadow:0 1px 0 var(--rule); }
+.key .lg { font-weight:500; font-size:calc(var(--u) * 0.32); }
+.key .word { font-weight:500; font-size:calc(var(--u) * 0.17); letter-spacing:0.02em; }
+.key.mod { background:#efe5d0; }
+.key.mod .lg, .key.mod .word, .key.mod .combo, .key.mod .tag { color:var(--ink-soft); font-style:italic; }
+.key.layerkey { border-color:var(--wax); box-shadow:inset 0 0 0 1px var(--wax), 0 1px 0 var(--rule); }
+.key.layerkey .lg, .key.layerkey .word { color:var(--wax); }
+/* the held key: a wax seal */
+.key.held { background:radial-gradient(circle at 40% 35%, #a91c28 0%, var(--wax) 55%, var(--wax-deep) 100%); border-color:var(--wax-deep); box-shadow:0 1px 2px rgba(60,10,14,0.4); }
+.key.held .word, .key.held .lg, .key.held .sub { color:var(--held-ink); }
+.key.trns { opacity:1; background:transparent; border:1px dashed #a8957a; box-shadow:none; }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:var(--ink-faint); }
+.key.dead { opacity:1; background:transparent; border:1px dotted #a8957a; box-shadow:none; }
+.key .sub { font-family:'Fragment Mono', monospace; color:var(--ink-soft); }
+.key.layerkey .sub { color:var(--wax); }
+
+.mapping { font-family:'Pirata One', Georgia, serif; font-size:calc(22px * var(--s)); font-weight:400; letter-spacing:0.06em; text-transform:none; color:var(--wax); }
+.footer { color:var(--ink-soft); }
+.footer .sep { color:var(--wax); }

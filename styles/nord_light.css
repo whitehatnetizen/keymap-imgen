@@ -1,0 +1,40 @@
+/* Nord light: snow storm page, white keys, polar-night ink, deep frost-blue layers. */
+@font-face { font-family:'Hanken Grotesk'; src:url('fonts/HankenGrotesk-variable-normal.woff2') format('woff2'); font-weight:100 900; }
+@font-face { font-family:'JetBrains Mono'; src:url('fonts/JetBrainsMono-variable-normal.woff2') format('woff2'); font-weight:100 800; }
+
+:root {
+  --nord0:#2e3440; --nord3:#4c566a; --nord4:#d8dee9; --nord5:#e5e9f0; --nord6:#eceff4; --nord7:#8fbcbb; --nord8:#88c0d0; --nord9:#81a1c1; --nord10:#5e81ac; --nord12:#d08770; --edge:#b8c1d1;
+  --bg:var(--nord6); --card:#ffffff; --ink:var(--nord0); --sec:var(--nord3); --line:var(--edge);
+  --acc:var(--nord10); --brass:#b0664a; --heldbg:var(--nord10); --held-ink:#ffffff;
+  --font-title:'Hanken Grotesk', system-ui, sans-serif;
+  --font-word:'Hanken Grotesk', system-ui, sans-serif;
+  --font-legend:'JetBrains Mono', monospace;
+  --font-label:'JetBrains Mono', monospace;
+}
+
+body { background:linear-gradient(180deg, var(--nord6) 0%, var(--nord5) 100%); }
+
+.qtitle { font-weight:700; font-size:calc(21px * var(--s)); color:var(--ink); }
+.qtitle .no { font-family:'JetBrains Mono', monospace; font-weight:500; font-size:calc(12px * var(--s)); letter-spacing:0.12em; color:var(--brass); vertical-align:middle; }
+.qtitle .dot { color:var(--edge); }
+.qaccess { color:var(--sec); letter-spacing:0.14em; }
+.drule { height:calc(3px * var(--s)); border:0; margin-top:calc(8px * var(--s)); opacity:1; background:linear-gradient(90deg, var(--nord7), var(--nord8) 33%, var(--nord9) 66%, var(--nord10)); }
+
+.key { border-radius:calc(var(--u) * 0.14); border:1px solid var(--line); background:var(--card); box-shadow:0 2px 0 var(--nord4); }
+.key .lg { font-weight:500; font-size:calc(var(--u) * 0.27); }
+.key .word { font-weight:600; font-size:calc(var(--u) * 0.155); }
+.key.mod { background:var(--nord5); }
+.key.mod .lg, .key.mod .word, .key.mod .combo, .key.mod .tag { color:var(--sec); }
+.key.layerkey { border-color:var(--acc); box-shadow:inset 0 0 0 1px var(--acc), 0 2px 0 var(--nord4); }
+.key.layerkey .lg, .key.layerkey .word { color:var(--acc); }
+.key.held { background:var(--acc); border-color:var(--acc); box-shadow:0 2px 0 #4c6a90; }
+.key.held .word, .key.held .lg, .key.held .sub { color:var(--held-ink); }
+.key.trns { opacity:1; background:transparent; border:1px dashed #98a3b6; box-shadow:none; }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:#76819a; }
+.key.dead { opacity:1; background:transparent; border:1px dotted #98a3b6; box-shadow:none; }
+.key .sub { font-weight:600; color:#4f8a89; }
+.key.layerkey .sub { color:var(--acc); }
+
+.mapping { font-weight:600; color:var(--nord10); letter-spacing:0.2em; }
+.footer { color:var(--sec); }
+.footer .sep { color:var(--brass); }

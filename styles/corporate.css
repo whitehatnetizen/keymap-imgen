@@ -5,7 +5,7 @@
 
 :root {
   --paper:#ffffff; --band:#f3f5f8; --navy:#1f4e8c; --navy-deep:#163a69; --sky:#e8f0fb;
-  --bg:var(--paper); --card:#ffffff; --ink:#1f2933; --sec:#66717d; --line:#cfd5dd; --edge:#aeb8c4;
+  --bg:var(--paper); --card:#ffffff; --ink:#1f2933; --sec:#66717d; --line:#c3cad3; --edge:#98a4b2;
   --acc:var(--navy); --brass:var(--navy); --heldbg:var(--navy); --held-ink:#ffffff;
   --font-title:'IBM Plex Sans', system-ui, sans-serif;
   --font-word:'IBM Plex Sans', system-ui, sans-serif;
@@ -35,7 +35,7 @@ body { background:linear-gradient(180deg, var(--paper) 0 88%, var(--band) 88% 10
 .key.held { background:var(--navy); border-color:var(--navy-deep); box-shadow:none; }
 .key.held .word, .key.held .lg, .key.held .sub { color:var(--held-ink); }
 .key.trns { opacity:1; background:transparent; border:1px dashed var(--edge); box-shadow:none; }
-.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:#a3adb8; }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:#8995a2; }
 .key.dead { opacity:1; background:#fafbfc; border:1px dotted var(--edge); box-shadow:none; }
 .key .sub { color:var(--sec); }
 .key.layerkey .sub { color:var(--navy); }

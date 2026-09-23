@@ -5,7 +5,7 @@
 @font-face { font-family:'Fragment Mono'; src:url('fonts/FragmentMono-400-normal.woff2') format('woff2'); font-weight:400; }
 
 :root {
-  --night:#14100d; --night-deep:#0f0c09; --card:#1d1814; --ink:#e9e1d2; --sec:#a39682; --line:#4a3f33; --line-soft:#372e25;
+  --night:#14100d; --night-deep:#0f0c09; --card:#231d18; --ink:#e9e1d2; --sec:#a39682; --line:#5e5041; --line-soft:#44392e;
   --brick:#c25545; --brass:#b58a2e;
   --bg:var(--night); --acc:var(--brick); --heldbg:var(--brick); --held-ink:#fbf3e6;
   --font-title:'Newsreader', Georgia, serif;
@@ -33,7 +33,7 @@ body { background:linear-gradient(180deg, var(--night) 0%, var(--night-deep) 100
 .key.held { background:var(--brick); border-color:#8e3a2e; box-shadow:0 1px 0 #8e3a2e; }
 .key.held .word, .key.held .lg, .key.held .sub { color:var(--held-ink); }
 .key.trns { opacity:1; background:transparent; border:1px dashed var(--line); box-shadow:none; }
-.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:#6a5d4d; }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:#8a7a64; }
 .key.dead { opacity:1; background:transparent; border:1px dotted var(--line); box-shadow:none; }
 .key .sub { color:var(--sec); }
 .key.layerkey .sub { color:var(--brick); }

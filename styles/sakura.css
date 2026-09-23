@@ -8,7 +8,7 @@
 
 :root {
   --washi:#fbf6f3; --washi-deep:#f5ebe8;
-  --petal:#f6e3e7; --petal-deep:#efd3da; --petal-edge:#dfbfc7; --petal-shadow:#e4c8cf;
+  --petal:#f3d8de; --petal-deep:#ecc8d1; --petal-edge:#d2a9b4; --petal-shadow:#dbb6c0;
   --rose:#c98d9c; --rose-deep:#a9657a; --rose-dark:#8a4f62;
   --bark:#6b5049; --plum:#4a3b43; --plum-soft:#8a747c;
   --bg:var(--washi); --card:var(--petal); --ink:var(--plum); --sec:var(--plum-soft); --line:var(--petal-edge);
@@ -41,7 +41,7 @@ body { background:linear-gradient(180deg, var(--washi) 0%, var(--washi-deep) 100
 .key.held { background:var(--heldbg); border-color:var(--rose-deep); box-shadow:0 calc(var(--u) * 0.04) 0 var(--rose-deep); }
 .key.held .word, .key.held .lg, .key.held .sub { color:var(--held-ink); }
 .key.trns { opacity:1; background:transparent; border:1px dashed var(--petal-edge); box-shadow:none; }
-.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:#c9a6ae; }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:#ad8592; }
 .key.dead { opacity:1; background:transparent; border:1px dotted var(--petal-edge); box-shadow:none; }
 .key .sub { font-weight:500; color:var(--plum-soft); }
 .key.layerkey .sub { color:var(--rose-dark); }

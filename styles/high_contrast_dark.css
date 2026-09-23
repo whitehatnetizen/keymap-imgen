@@ -1,0 +1,37 @@
+/* High contrast dark: pure white on black, the same large legends, corner flags and double outlines. */
+:root {
+  --bg:#000000; --card:#000000; --ink:#ffffff; --sec:#ffffff; --line:#ffffff;
+  --acc:#ffffff; --brass:#ffffff; --heldbg:#ffffff; --held-ink:#000000;
+  --font-title:system-ui, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-word:system-ui, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-legend:system-ui, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-label:Consolas, Menlo, "DejaVu Sans Mono", monospace;
+}
+.qtitle { font-weight:800; font-size:calc(26px * var(--s)); }
+.qtitle .dot { color:#ffffff; }
+.qaccess { font-size:calc(12px * var(--s)); font-weight:700; color:#ffffff; }
+.drule { border-top-width:calc(4px * var(--s)); opacity:1; }
+/* every key: a 3px black outline, legends as large as the key allows */
+.key { border:3px solid #ffffff; border-radius:calc(var(--u) * 0.06); background:#000000; }
+.key .lg { font-weight:800; font-size:calc(var(--u) * 0.4); }
+.key .word { font-weight:800; font-size:calc(var(--u) * 0.17); }
+.key .combo { font-weight:800; font-size:calc(var(--u) * 0.18); }
+.key .tag { font-weight:700; font-size:calc(var(--u) * 0.155); }
+.key .sub { font-size:calc(var(--u) * 0.145 * var(--subfit, 1)); font-weight:700; color:#ffffff; }
+.key.mod .lg, .key.mod .word, .key.mod .combo, .key.mod .tag { color:#ffffff; }
+/* modifiers: an underline bar, so they read apart from letters without grey */
+.key.mod { box-shadow:inset 0 calc(var(--u) * -0.07) 0 #ffffff; }
+/* the layer key: a double outline and a black corner flag */
+.key.layerkey { box-shadow:inset 0 0 0 1.5px #000000, inset 0 0 0 3.5px #ffffff; }
+.key.layerkey::after { content:""; position:absolute; top:0; right:0; width:calc(var(--u) * 0.2); height:calc(var(--u) * 0.2);
+  background:linear-gradient(225deg, #ffffff 50%, transparent 50%); }
+.key.held { background:#ffffff; box-shadow:none; }
+.key.held::after { background:linear-gradient(225deg, #000000 50%, transparent 50%); }
+.key.held .word, .key.held .lg, .key.held .sub { color:#000000; }
+/* fall-through keys: a heavy dash; unused keys: a heavy dot; both keep white legends */
+.key.trns { opacity:1; border:3px dashed #ffffff; box-shadow:none; }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:#ffffff; font-weight:400; }
+.key.dead { opacity:1; border:3px dotted #ffffff; box-shadow:none; }
+.mapping { font-size:calc(15px * var(--s)); font-weight:800; }
+.footer { font-size:calc(12px * var(--s)); font-weight:700; color:#ffffff; }
+.footer .sep { color:#ffffff; }

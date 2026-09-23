@@ -3,7 +3,7 @@
 @font-face { font-family:'Share Tech Mono'; src:url('fonts/ShareTechMono-400-normal.woff2') format('woff2'); font-weight:400; }
 
 :root {
-  --screen:#8fdc7e; --screen-deep:#79c96a; --carbon:#06200c; --carbon-soft:#1f5a2a; --carbon-faint:#4d8a58; --hi:#f0ffb0;
+  --screen:#a4c796; --screen-deep:#8fb482; --carbon:#06200c; --carbon-soft:#1f5a2a; --carbon-faint:#557d58; --hi:#f0ffb0;
   --bg:var(--screen); --card:transparent; --ink:var(--carbon); --sec:var(--carbon-soft); --line:var(--carbon-soft);
   --acc:var(--carbon); --brass:var(--carbon); --heldbg:var(--carbon); --held-ink:var(--hi);
   --font-title:'VT323', monospace;

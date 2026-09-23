@@ -5,7 +5,7 @@
 :root {
   --base:#eff1f5; --mantle:#e6e9ef; --crust:#dce0e8; --surface0:#ccd0da; --surface1:#bcc0cc; --overlay0:#9ca0b0;
   --text:#4c4f69; --subtext0:#6c6f85; --mauve:#8839ef; --pink:#ea76cb; --blue:#1e66f5; --peach:#fe640b; --yellow:#df8e1d; --lavender:#7287fd; --teal:#179299;
-  --bg:var(--base); --card:#ffffff; --ink:var(--text); --sec:var(--subtext0); --line:var(--surface1);
+  --bg:var(--base); --card:#ffffff; --ink:var(--text); --sec:var(--subtext0); --line:#acb0be;
   --acc:var(--mauve); --brass:var(--peach); --heldbg:var(--mauve); --held-ink:#ffffff;
   --font-title:'Nunito', system-ui, sans-serif;
   --font-word:'Nunito', system-ui, sans-serif;
@@ -31,9 +31,9 @@ body { background:linear-gradient(180deg, var(--base) 0%, var(--mantle) 100%); }
 .key.layerkey .lg, .key.layerkey .word { color:var(--mauve); }
 .key.held { background:var(--mauve); border-color:var(--mauve); box-shadow:0 2px 0 #5f22b3; }
 .key.held .word, .key.held .lg, .key.held .sub { color:var(--held-ink); }
-.key.trns { opacity:1; background:transparent; border:1px dashed var(--surface1); box-shadow:none; }
-.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:var(--overlay0); }
-.key.dead { opacity:1; background:transparent; border:1px dotted var(--surface1); box-shadow:none; }
+.key.trns { opacity:1; background:transparent; border:1px dashed #acb0be; box-shadow:none; }
+.key.trns .lg, .key.trns .word, .key.trns .combo, .key.trns .tag, .key.trns .sub { color:#8c8fa1; }
+.key.dead { opacity:1; background:transparent; border:1px dotted #acb0be; box-shadow:none; }
 .key .sub { font-weight:700; color:var(--teal); }
 .key.layerkey .sub { color:var(--mauve); }
 

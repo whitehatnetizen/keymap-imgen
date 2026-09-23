@@ -2,6 +2,21 @@
 
 Every release is a git tag (`v1.1.1` and so on). Dates are the day the tag was made.
 
+## 1.3.0, 2026-09-23
+
+- Twelve new styles, making 45: `high_contrast` and `high_contrast_dark` (pure black and
+  white, the largest legends, layer keys marked by a corner flag and a double outline
+  rather than by colour); `gruvbox`, `nord` and `tokyonight`, each with a light version,
+  in their authors' published palettes; `dracula` / `dracula_light`, the count's study
+  (black velvet, blood-red layers, a drip on the held key, blackletter headers in the
+  newly bundled Pirata One) and a letter from the castle (laid paper, wax-seal red); and
+  `nuclear` / `nuclear_light`, a reactor control desk (slate keys, amber modifiers, a red
+  lamp on the layer keys).
+- Stronger key outlines and fall-through keys in `obsidian`, `paper_dark`, `sakura`,
+  `corporate`, `catppuccin_light` and `slate_light`, which faded at wallpaper size; a
+  duller phosphor green for `terminal_light`.
+- The README gallery shows the printer card and its four variants together.
+
 ## 1.2.0, 2026-09-01
 
 - Combos (keys pressed together that give another key) are drawn: numbered badges with a
