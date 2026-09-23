@@ -1,8 +1,8 @@
 # Board geometry data: provenance and licence
 
-`qmk-index.json.gz` in this folder and `docs/boards.js` were generated on 2026-08-27
+`qmk-index.json.gz` in this folder and `docs/boards.js` were generated on 2026-09-01
 by `tools/build_qmk_index.py` from the QMK Firmware project's published keyboard data at
-https://keyboards.qmk.fm/v1 (3753 keyboards). For each keyboard they keep the name, matrix size, and
+https://keyboards.qmk.fm/v1 (3756 keyboards). For each keyboard they keep the name, matrix size, and
 the position of every key in every layout. Nothing else from QMK is included.
 
 QMK Firmware is copyright its contributors and released under the GNU General Public
@@ -16,8 +16,8 @@ interrupted.
 
 ## Keycode names
 
-`docs/keycodes.js` was generated on 2026-08-27 by `tools/build_keycodes.py` from the same
-project's keycode data (https://github.com/qmk/qmk_firmware/tree/master/data/constants/keycodes, spec 0.0.8):
+`docs/keycodes.js` was generated on 2026-09-01 by `tools/build_keycodes.py` from the same
+project's keycode data (https://github.com/qmk/qmk_firmware/tree/master/data/constants/keycodes, spec 0.0.9):
 the number of every named keycode and the layout of the ranges (mod-tap, layer-tap, ...). It turns
 the numbers a keyboard reports over USB back into names, on the page and on the command line. Same licence
 and terms as the geometry data above.
