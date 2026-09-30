@@ -1,6 +1,6 @@
 # ZMK board geometry data: provenance and licence
 
-`zmk-index.json.gz` in this folder and `docs/zmk-boards.js` were generated on 2026-09-01
+`zmk-index.json.gz` in this folder and `docs/zmk-boards.js` were generated on 2026-10-01
 by `tools/build_zmk_index.py` from the `zmk,physical-layout` nodes (per-key positions in
 centi-key-units) in these repositories (34 boards in all):
 
